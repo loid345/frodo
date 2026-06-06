@@ -27,7 +27,7 @@
                 </field>
                 <field id="whitelist_emails" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Email whitelist</label>
-                    <comment>Emails that bypass all antifraud limits and blacklists. Separate by new line, comma, semicolon or spaces.</comment>
+                    <comment>Emails that bypass daily order count and amount limits. Blacklists still block these emails. Separate by new line, comma, semicolon or spaces.</comment>
                 </field>
                 <field id="blacklist_emails" translate="label comment" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Email blacklist</label>
@@ -39,7 +39,7 @@
                 </field>
                 <field id="blacklist_ips" translate="label comment" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>IP blacklist</label>
-                    <comment>Orders from these IP addresses are blocked. IPv4, IPv6 and IPv4 CIDR ranges are supported.</comment>
+                    <comment>Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported.</comment>
                 </field>
             </group>
         </section>

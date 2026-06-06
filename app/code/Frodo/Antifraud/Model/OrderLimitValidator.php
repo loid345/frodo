@@ -52,9 +52,7 @@ class OrderLimitValidator
         }
 
         $email = (string)($order->getCustomerEmail() ?: $quote->getCustomerEmail());
-        if ($this->emailList->contains($email, $this->config->getWhitelistEmails($storeId))) {
-            return;
-        }
+        $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails($storeId));
 
         if ($this->emailList->contains($email, $this->config->getBlacklistEmails($storeId))) {
             throw new LocalizedException(__('Order placement is not available for this customer.'));
@@ -68,6 +66,10 @@ class OrderLimitValidator
         $remoteIp = (string)$quote->getRemoteIp();
         if ($this->ipMatcher->contains($remoteIp, $this->config->getBlacklistIps($storeId))) {
             throw new LocalizedException(__('Order placement is not available from this IP address.'));
+        }
+
+        if ($isWhitelisted) {
+            return;
         }
 
         $countLimit = $this->config->getDailyOrderCountLimit($storeId);

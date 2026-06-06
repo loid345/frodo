@@ -21,8 +21,12 @@ class IpMatcher
                 continue;
             }
 
-            if (strpos($blockedIp, '/') !== false && $this->matchesCidr($ip, $blockedIp)) {
-                return true;
+            if (strpos($blockedIp, '/') !== false) {
+                if ($this->matchesCidr($ip, $blockedIp)) {
+                    return true;
+                }
+
+                continue;
             }
 
             if (strcasecmp($ip, $blockedIp) === 0) {
@@ -40,24 +44,33 @@ class IpMatcher
             return false;
         }
 
+        $ipBinary = inet_pton($ip);
+        $subnetBinary = inet_pton($subnet);
+        if ($ipBinary === false || $subnetBinary === false || strlen($ipBinary) !== strlen($subnetBinary)) {
+            return false;
+        }
+
         $maskBits = (int)$mask;
-        if ($maskBits < 0 || $maskBits > 32) {
+        $totalBits = strlen($ipBinary) * 8;
+        if ($maskBits < 0 || $maskBits > $totalBits) {
             return false;
         }
 
-        $ipLong = ip2long($ip);
-        $subnetLong = ip2long($subnet);
-        if ($ipLong === false || $subnetLong === false) {
+        $fullBytes = intdiv($maskBits, 8);
+        $remainingBits = $maskBits % 8;
+
+        if ($fullBytes > 0 && substr($ipBinary, 0, $fullBytes) !== substr($subnetBinary, 0, $fullBytes)) {
             return false;
         }
 
-        if ($maskBits === 0) {
+        if ($remainingBits === 0) {
             return true;
         }
 
-        $maskLong = -1 << (32 - $maskBits);
-        $subnetLong &= $maskLong;
+        $maskByte = (0xff << (8 - $remainingBits)) & 0xff;
+        $ipByte = ord($ipBinary[$fullBytes]) & $maskByte;
+        $subnetByte = ord($subnetBinary[$fullBytes]) & $maskByte;
 
-        return ($ipLong & $maskLong) === $subnetLong;
+        return $ipByte === $subnetByte;
     }
 }
