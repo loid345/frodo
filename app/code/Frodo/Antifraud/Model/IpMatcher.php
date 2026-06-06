@@ -29,12 +29,24 @@ class IpMatcher
                 continue;
             }
 
-            if (strcasecmp($ip, $blockedIp) === 0) {
+            if ($this->matchesExactIp($ip, $blockedIp)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private function matchesExactIp(string $ip, string $blockedIp): bool
+    {
+        $ipBinary = inet_pton($ip);
+        $blockedIpBinary = inet_pton($blockedIp);
+
+        if ($ipBinary !== false && $blockedIpBinary !== false) {
+            return hash_equals($ipBinary, $blockedIpBinary);
+        }
+
+        return strcasecmp($ip, $blockedIp) === 0;
     }
 
     private function matchesCidr(string $ip, string $cidr): bool
