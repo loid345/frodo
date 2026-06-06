@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="frodo" translate="label" sortOrder="500">
+            <label>Frodo</label>
+        </tab>
+        <section id="frodo_antifraud" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Antifraud</label>
+            <tab>frodo</tab>
+            <resource>Frodo_Antifraud::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable order antifraud checks for this scope.</comment>
+                </field>
+                <field id="daily_order_count_limit" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Daily order count limit</label>
+                    <validate>validate-zero-or-greater validate-digits</validate>
+                    <comment>Maximum number of orders per email per store day. Leave empty or set 0 to disable.</comment>
+                </field>
+                <field id="daily_amount_limit" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Daily amount limit</label>
+                    <validate>validate-zero-or-greater</validate>
+                    <comment>Maximum total order amount per email per store day. The value is compared with order base totals, so configure it in the website base currency. Leave empty or set 0 to disable.</comment>
+                </field>
+                <field id="whitelist_emails" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Email whitelist</label>
+                    <comment>Emails that bypass daily order count and amount limits. Blacklists still block these emails. Separate by new line, comma, semicolon or spaces.</comment>
+                </field>
+                <field id="blacklist_emails" translate="label comment" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Email blacklist</label>
+                    <comment>Orders from these emails are blocked. Separate by new line, comma, semicolon or spaces.</comment>
+                </field>
+                <field id="blacklist_customer_ids" translate="label comment" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer ID blacklist</label>
+                    <comment>Registered customers with these IDs are blocked. Guest orders are checked by e-mail and IP only. Separate by new line, comma, semicolon or spaces.</comment>
+                </field>
+                <field id="blacklist_ips" translate="label comment" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>IP blacklist</label>
+                    <comment>Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
