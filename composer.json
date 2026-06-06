@@ -1,0 +1,21 @@
+{
+    "name": "frodo/module-antifraud",
+    "description": "Magento 2 antifraud limits and blacklist module.",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "autoload": {
+        "files": [
+            "app/code/Frodo/Antifraud/registration.php"
+        ],
+        "psr-4": {
+            "Frodo\\Antifraud\\": "app/code/Frodo/Antifraud/"
+        }
+    },
+    "require": {
+        "php": "~8.2.0||~8.3.0",
+        "magento/framework": "*",
+        "magento/module-quote": "*",
+        "magento/module-sales": "*",
+        "magento/module-store": "*"
+    }
+}
