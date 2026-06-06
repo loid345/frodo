@@ -12,6 +12,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -51,7 +52,7 @@ class OrderLimitValidator
             return;
         }
 
-        $email = (string)($order->getCustomerEmail() ?: $quote->getCustomerEmail());
+        $email = $this->normalizeEmail((string)($order->getCustomerEmail() ?: $quote->getCustomerEmail()));
         $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails($storeId));
 
         if ($this->emailList->contains($email, $this->config->getBlacklistEmails($storeId))) {
@@ -90,6 +91,11 @@ class OrderLimitValidator
         }
     }
 
+    private function normalizeEmail(string $email): string
+    {
+        return strtolower(trim($email));
+    }
+
     /**
      * @return array{orders_count:int, base_amount_total:float}
      */
@@ -107,11 +113,11 @@ class OrderLimitValidator
                     'base_amount_total' => 'COALESCE(SUM(base_grand_total), 0)'
                 ]
             )
-            ->where('orders.customer_email = ?', $email)
+            ->where('LOWER(orders.customer_email) = ?', $email)
             ->where('orders.store_id IN (?)', $this->getWebsiteStoreIds((int)$quote->getStoreId()))
             ->where('orders.created_at >= ?', $startUtc)
             ->where('orders.created_at < ?', $endUtc)
-            ->where('orders.state NOT IN (?)', ['canceled', 'closed']);
+            ->where('orders.state NOT IN (?)', [Order::STATE_CANCELED, Order::STATE_CLOSED]);
 
         $row = $connection->fetchRow($select) ?: [];
 
