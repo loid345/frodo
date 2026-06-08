@@ -14,6 +14,7 @@ The module supports Magento multi-website installations, Russian and English adm
 - IP blacklist that blocks checkout by exact IPv4/IPv6 address or CIDR range.
 - Daily totals are calculated for the current website's stores and the current store day/time zone.
 - Amount limits are compared with `sales_order.base_grand_total`, so configure the limit in the website base currency. This keeps checks stable when customers pay in different display currencies.
+- Customer-facing antifraud status names: blacklisted customers see `Order placement is blocked`; customers over a daily limit see `Daily limit reached`.
 
 ## Installation
 
@@ -38,3 +39,5 @@ Open **Stores → Configuration → Frodo → Antifraud → General**.
 | Email blacklist | E-mails that are blocked from checkout. Separate values with a new line, comma, semicolon, or space. |
 | Customer ID blacklist | Registered customer IDs that are blocked from checkout. Guest orders are checked by e-mail and IP only. |
 | IP blacklist | Exact IP addresses or CIDR ranges to block. Separate values with a new line, comma, semicolon, or space. |
+
+Blocked customers are described as **Order placement is blocked**. Customers temporarily limited by daily count or amount limits are described as **Daily limit reached**.

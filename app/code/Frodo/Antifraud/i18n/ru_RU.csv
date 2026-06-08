@@ -15,6 +15,6 @@
 "IP blacklist","Черный список IP"
 "Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported.","Заказы с этих IP-адресов будут заблокированы. Поддерживаются IPv4, IPv6 и CIDR-диапазоны."
 "Frodo Antifraud Configuration","Настройка антифрода Frodo"
-"Order placement is not available for this customer.","Оформление заказа недоступно для этого пользователя."
+"Order placement is blocked.","Оформление заказов заблокировано."
 "Order placement is not available from this IP address.","Оформление заказа недоступно с этого IP-адреса."
-"Daily order limit has been exceeded. Please try again later.","Превышен суточный лимит заказов. Попробуйте позже."
+"Daily limit reached.","Достигнут суточный лимит."

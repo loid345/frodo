@@ -15,6 +15,6 @@
 "IP blacklist","IP blacklist"
 "Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported.","Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported."
 "Frodo Antifraud Configuration","Frodo Antifraud Configuration"
-"Order placement is not available for this customer.","Order placement is not available for this customer."
+"Order placement is blocked.","Order placement is blocked."
 "Order placement is not available from this IP address.","Order placement is not available from this IP address."
-"Daily order limit has been exceeded. Please try again later.","Daily order limit has been exceeded. Please try again later."
+"Daily limit reached.","Daily limit reached."
