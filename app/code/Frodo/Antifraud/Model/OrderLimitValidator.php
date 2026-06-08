@@ -6,18 +6,19 @@ declare(strict_types=1);
 
 namespace Frodo\Antifraud\Model;
 
-use DateTimeImmutable;
 use DateTimeZone;
 use Frodo\Antifraud\Helper\Config;
-use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Select;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
 use Magento\Framework\Phrase;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use Zend_Db_Expr;
 
 class OrderLimitValidator
 {
@@ -39,9 +40,14 @@ class OrderLimitValidator
     private IpMatcher $ipMatcher;
 
     /**
-     * @var ResourceConnection
+     * @var OrderCollectionFactory
      */
-    private ResourceConnection $resourceConnection;
+    private OrderCollectionFactory $orderCollectionFactory;
+
+    /**
+     * @var RemoteAddress
+     */
+    private RemoteAddress $remoteAddress;
 
     /**
      * @var StoreManagerInterface
@@ -59,7 +65,8 @@ class OrderLimitValidator
      * @param Config $config
      * @param EmailList $emailList
      * @param IpMatcher $ipMatcher
-     * @param ResourceConnection $resourceConnection
+     * @param OrderCollectionFactory $orderCollectionFactory
+     * @param RemoteAddress $remoteAddress
      * @param StoreManagerInterface $storeManager
      * @param TimezoneInterface $timezone
      */
@@ -67,14 +74,16 @@ class OrderLimitValidator
         Config $config,
         EmailList $emailList,
         IpMatcher $ipMatcher,
-        ResourceConnection $resourceConnection,
+        OrderCollectionFactory $orderCollectionFactory,
+        RemoteAddress $remoteAddress,
         StoreManagerInterface $storeManager,
         TimezoneInterface $timezone
     ) {
         $this->config = $config;
         $this->emailList = $emailList;
         $this->ipMatcher = $ipMatcher;
-        $this->resourceConnection = $resourceConnection;
+        $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->remoteAddress = $remoteAddress;
         $this->storeManager = $storeManager;
         $this->timezone = $timezone;
     }
@@ -106,7 +115,7 @@ class OrderLimitValidator
             throw new LocalizedException(__('Order placement is not available for this customer.'));
         }
 
-        $remoteIp = (string)$quote->getRemoteIp();
+        $remoteIp = $this->getRemoteIp($quote);
         if ($this->ipMatcher->contains($remoteIp, $this->config->getBlacklistIps($storeId))) {
             throw new LocalizedException(__('Order placement is not available from this IP address.'));
         }
@@ -145,6 +154,24 @@ class OrderLimitValidator
     }
 
     /**
+     * Get the quote remote IP or fallback to the current request remote address.
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    private function getRemoteIp(Quote $quote): string
+    {
+        $remoteIp = trim((string)$quote->getRemoteIp());
+        if ($remoteIp !== '') {
+            return $remoteIp;
+        }
+
+        $remoteAddress = $this->remoteAddress->getRemoteAddress();
+
+        return is_string($remoteAddress) ? trim($remoteAddress) : '';
+    }
+
+    /**
      * Get existing daily order totals for the quote email and website stores.
      *
      * @param Quote $quote
@@ -153,25 +180,28 @@ class OrderLimitValidator
      */
     private function getDailyTotals(Quote $quote, string $email): array
     {
-        $connection = $this->resourceConnection->getConnection();
-        $salesOrderTable = $this->resourceConnection->getTableName('sales_order');
         [$startUtc, $endUtc] = $this->getStoreDayUtcRange((int)$quote->getStoreId());
+        $collection = $this->orderCollectionFactory->create();
+        $collection->addFieldToFilter(OrderInterface::STORE_ID, [
+            'in' => $this->getWebsiteStoreIds((int)$quote->getStoreId())
+        ]);
+        $collection->addFieldToFilter(OrderInterface::STATE, [
+            'nin' => [Order::STATE_CANCELED, Order::STATE_CLOSED]
+        ]);
 
-        $select = $connection->select()
-            ->from(
-                ['orders' => $salesOrderTable],
-                [
-                    'orders_count' => 'COUNT(*)',
-                    'base_amount_total' => 'COALESCE(SUM(base_grand_total), 0)'
-                ]
-            )
-            ->where('LOWER(orders.customer_email) = ?', $email)
-            ->where('orders.store_id IN (?)', $this->getWebsiteStoreIds((int)$quote->getStoreId()))
-            ->where('orders.created_at >= ?', $startUtc)
-            ->where('orders.created_at < ?', $endUtc)
-            ->where('orders.state NOT IN (?)', [Order::STATE_CANCELED, Order::STATE_CLOSED]);
+        $select = $collection->getSelect();
+        $select->reset(Select::COLUMNS)
+            ->columns([
+                'orders_count' => new Zend_Db_Expr('COUNT(*)'),
+                'base_amount_total' => new Zend_Db_Expr(
+                    'COALESCE(SUM(main_table.base_grand_total), 0)'
+                )
+            ])
+            ->where('LOWER(main_table.customer_email) = ?', $email)
+            ->where('main_table.created_at >= ?', $startUtc)
+            ->where('main_table.created_at < ?', $endUtc);
 
-        $row = $connection->fetchRow($select) ?: [];
+        $row = $collection->getConnection()->fetchRow($select) ?: [];
 
         return [
             'orders_count' => (int)($row['orders_count'] ?? 0),
@@ -204,13 +234,14 @@ class OrderLimitValidator
      */
     private function getStoreDayUtcRange(int $storeId): array
     {
-        $timezone = new DateTimeZone($this->timezone->getConfigTimezone(ScopeInterface::SCOPE_STORE, $storeId));
-        $start = new DateTimeImmutable('today', $timezone);
-        $end = $start->modify('+1 day');
+        $currentDate = $this->timezone->scopeDate($storeId);
+        $start = (clone $currentDate)->setTime(0, 0);
+        $end = (clone $start)->modify('+1 day');
+        $utcTimezone = new DateTimeZone(self::UTC_TIMEZONE);
 
         return [
-            $start->setTimezone(new DateTimeZone(self::UTC_TIMEZONE))->format('Y-m-d H:i:s'),
-            $end->setTimezone(new DateTimeZone(self::UTC_TIMEZONE))->format('Y-m-d H:i:s'),
+            $start->setTimezone($utcTimezone)->format('Y-m-d H:i:s'),
+            $end->setTimezone($utcTimezone)->format('Y-m-d H:i:s'),
         ];
     }
 
