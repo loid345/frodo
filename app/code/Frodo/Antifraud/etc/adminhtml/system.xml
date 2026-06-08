@@ -31,11 +31,11 @@
                 </field>
                 <field id="blacklist_emails" translate="label comment" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Email blacklist</label>
-                    <comment>Orders from these emails are blocked. Separate by new line, comma, semicolon or spaces.</comment>
+                    <comment>Orders from these emails are blocked. Customer email changes are synced automatically. Separate by new line, comma, semicolon or spaces.</comment>
                 </field>
-                <field id="blacklist_customer_ids" translate="label comment" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Customer ID blacklist</label>
-                    <comment>Registered customers with these IDs are blocked. Guest orders are checked by e-mail and IP only. Separate by new line, comma, semicolon or spaces.</comment>
+                <field id="limited_emails" translate="label comment" type="textarea" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Temporary limited emails</label>
+                    <comment>Emails temporarily limited by admin buttons. Entries are stored as email:expires_at and customer email changes are synced automatically.</comment>
                 </field>
                 <field id="blacklist_ips" translate="label comment" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>IP blacklist</label>

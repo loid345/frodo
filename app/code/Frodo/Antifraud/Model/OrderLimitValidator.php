@@ -107,12 +107,11 @@ class OrderLimitValidator
         $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails($storeId));
 
         if ($this->emailList->contains($email, $this->config->getBlacklistEmails($storeId))) {
-            throw new LocalizedException(__('Order placement is not available for this customer.'));
+            throw new LocalizedException(__('Order placement is blocked.'));
         }
 
-        $customerId = (int)($order->getCustomerId() ?: $quote->getCustomerId());
-        if ($customerId > 0 && in_array($customerId, $this->config->getBlacklistCustomerIds($storeId), true)) {
-            throw new LocalizedException(__('Order placement is not available for this customer.'));
+        if ($email !== '' && in_array($email, $this->config->getLimitedEmails($storeId), true)) {
+            throw new LocalizedException($this->getLimitMessage());
         }
 
         $remoteIp = $this->getRemoteIp($quote);
@@ -252,6 +251,6 @@ class OrderLimitValidator
      */
     private function getLimitMessage(): Phrase
     {
-        return __('Daily order limit has been exceeded. Please try again later.');
+        return __('Daily limit reached.');
     }
 }
