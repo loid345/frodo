@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ruleset name="Frodo Antifraud Magento 2 Coding Standard">
+    <description>Magento 2 coding standard checks for the Frodo_Antifraud module.</description>
+
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="4"/>
+
+    <file>app/code/Frodo/Antifraud</file>
+
+    <rule ref="Magento2"/>
+</ruleset>

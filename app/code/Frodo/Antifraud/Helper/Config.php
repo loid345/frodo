@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace Frodo\Antifraud\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
 
 class Config extends AbstractHelper
@@ -20,16 +19,23 @@ class Config extends AbstractHelper
     private const XML_PATH_BLACKLIST_CUSTOMER_IDS = 'frodo_antifraud/general/blacklist_customer_ids';
     private const XML_PATH_BLACKLIST_IPS = 'frodo_antifraud/general/blacklist_ips';
 
-    public function __construct(Context $context)
-    {
-        parent::__construct($context);
-    }
-
+    /**
+     * Check whether antifraud validation is enabled for the store scope.
+     *
+     * @param int $storeId
+     * @return bool
+     */
     public function isEnabled(int $storeId): bool
     {
         return $this->scopeConfig->isSetFlag(self::XML_PATH_ENABLED, ScopeInterface::SCOPE_STORE, $storeId);
     }
 
+    /**
+     * Get the daily order count limit for the store scope.
+     *
+     * @param int $storeId
+     * @return int
+     */
     public function getDailyOrderCountLimit(int $storeId): int
     {
         return max(0, (int)$this->scopeConfig->getValue(
@@ -39,6 +45,12 @@ class Config extends AbstractHelper
         ));
     }
 
+    /**
+     * Get the daily base amount limit for the store scope.
+     *
+     * @param int $storeId
+     * @return float
+     */
     public function getDailyAmountLimit(int $storeId): float
     {
         return max(0.0, (float)$this->scopeConfig->getValue(
@@ -49,6 +61,9 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get whitelist email entries for the store scope.
+     *
+     * @param int $storeId
      * @return string[]
      */
     public function getWhitelistEmails(int $storeId): array
@@ -61,6 +76,9 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get blacklist email entries for the store scope.
+     *
+     * @param int $storeId
      * @return string[]
      */
     public function getBlacklistEmails(int $storeId): array
@@ -73,22 +91,36 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get positive numeric customer ID blacklist entries for the store scope.
+     *
+     * @param int $storeId
      * @return int[]
      */
     public function getBlacklistCustomerIds(int $storeId): array
     {
-        $customerIds = array_map('intval', $this->parseList((string)$this->scopeConfig->getValue(
+        $customerIds = [];
+        foreach ($this->parseList((string)$this->scopeConfig->getValue(
             self::XML_PATH_BLACKLIST_CUSTOMER_IDS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        )));
+        )) as $customerId) {
+            if (!ctype_digit($customerId)) {
+                continue;
+            }
 
-        return array_values(array_filter($customerIds, static function (int $customerId): bool {
-            return $customerId > 0;
-        }));
+            $customerId = (int)$customerId;
+            if ($customerId > 0) {
+                $customerIds[] = $customerId;
+            }
+        }
+
+        return array_values(array_unique($customerIds));
     }
 
     /**
+     * Get IP blacklist entries for the store scope.
+     *
+     * @param int $storeId
      * @return string[]
      */
     public function getBlacklistIps(int $storeId): array
@@ -101,6 +133,9 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Parse a configured delimited list into unique non-empty items.
+     *
+     * @param string $value
      * @return string[]
      */
     private function parseList(string $value): array
