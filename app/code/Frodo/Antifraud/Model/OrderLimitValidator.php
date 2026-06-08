@@ -115,6 +115,10 @@ class OrderLimitValidator
             throw new LocalizedException(__('Order placement is blocked.'));
         }
 
+        if ($customerId > 0 && in_array($customerId, $this->config->getLimitedCustomerIds($storeId), true)) {
+            throw new LocalizedException($this->getLimitMessage());
+        }
+
         $remoteIp = $this->getRemoteIp($quote);
         if ($this->ipMatcher->contains($remoteIp, $this->config->getBlacklistIps($storeId))) {
             throw new LocalizedException(__('Order placement is not available from this IP address.'));

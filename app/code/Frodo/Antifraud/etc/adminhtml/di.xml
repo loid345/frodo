@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Customer\Block\Adminhtml\Edit">
+        <plugin name="frodo_antifraud_customer_edit_buttons" type="Frodo\Antifraud\Plugin\Customer\Block\Adminhtml\EditButtons"/>
+    </type>
+</config>

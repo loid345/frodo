@@ -37,6 +37,10 @@
                     <label>Customer ID blacklist</label>
                     <comment>Registered customers with these IDs are blocked. Guest orders are checked by e-mail and IP only. Separate by new line, comma, semicolon or spaces.</comment>
                 </field>
+                <field id="limited_customer_ids" translate="label comment" type="textarea" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Temporary limited customer IDs</label>
+                    <comment>Customer IDs temporarily limited by admin buttons. Entries are stored as customer_id:expires_at.</comment>
+                </field>
                 <field id="blacklist_ips" translate="label comment" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>IP blacklist</label>
                     <comment>Orders from these IP addresses are blocked. IPv4, IPv6 and CIDR ranges are supported.</comment>
