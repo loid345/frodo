@@ -16,6 +16,7 @@
         "magento/framework": "*",
         "magento/module-quote": "*",
         "magento/module-sales": "*",
-        "magento/module-store": "*"
+        "magento/module-store": "*",
+        "magento/module-config": "*"
     }
 }
