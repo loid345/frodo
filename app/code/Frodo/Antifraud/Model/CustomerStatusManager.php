@@ -231,9 +231,30 @@ class CustomerStatusManager
 
         $expiresAt = $expirations[$oldEmail];
         unset($expirations[$oldEmail]);
-        $expirations[$newEmail] = $expiresAt;
 
+        if (isset($expirations[$newEmail]) && $this->isLaterExpiration($expirations[$newEmail], $expiresAt)) {
+            $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
+            return;
+        }
+
+        $expirations[$newEmail] = $expiresAt;
         $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
+    }
+
+    /**
+     * Check whether the first expiration is later than the second one.
+     *
+     * @param string $firstExpiresAt
+     * @param string $secondExpiresAt
+     * @return bool
+     */
+    private function isLaterExpiration(string $firstExpiresAt, string $secondExpiresAt): bool
+    {
+        try {
+            return new DateTimeImmutable($firstExpiresAt) > new DateTimeImmutable($secondExpiresAt);
+        } catch (\Exception $exception) {
+            return false;
+        }
     }
 
     /**
