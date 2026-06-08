@@ -161,6 +161,26 @@ class CustomerStatusManager
     }
 
     /**
+     * Replace an old customer email with a new one in all email-based lists.
+     *
+     * @param string $oldEmail
+     * @param string $newEmail
+     * @return void
+     */
+    public function syncEmailChange(string $oldEmail, string $newEmail): void
+    {
+        $oldEmail = $this->normalizeEmail($oldEmail);
+        $newEmail = $this->normalizeEmail($newEmail);
+        if ($oldEmail === '' || $newEmail === '' || $oldEmail === $newEmail) {
+            return;
+        }
+
+        $this->syncEmailList(Config::XML_PATH_BLACKLIST_EMAILS, $oldEmail, $newEmail);
+        $this->syncEmailList(Config::XML_PATH_WHITELIST_EMAILS, $oldEmail, $newEmail);
+        $this->syncLimitedEmailList($oldEmail, $newEmail);
+    }
+
+    /**
      * Get configured emails in the order blacklist.
      *
      * @return string[]
@@ -168,6 +188,52 @@ class CustomerStatusManager
     private function getBlacklistEmails(): array
     {
         return $this->normalizeEmails($this->getConfiguredList(Config::XML_PATH_BLACKLIST_EMAILS));
+    }
+
+    /**
+     * Replace an email in a plain email config list.
+     *
+     * @param string $path
+     * @param string $oldEmail
+     * @param string $newEmail
+     * @return void
+     */
+    private function syncEmailList(string $path, string $oldEmail, string $newEmail): void
+    {
+        $emails = $this->normalizeEmails($this->getConfiguredList($path));
+        if (!in_array($oldEmail, $emails, true)) {
+            return;
+        }
+
+        $updatedEmails = array_map(
+            static function (string $email) use ($oldEmail, $newEmail): string {
+                return $email === $oldEmail ? $newEmail : $email;
+            },
+            $emails
+        );
+
+        $this->saveList($path, $this->normalizeEmails($updatedEmails));
+    }
+
+    /**
+     * Replace an email in the temporary limit config list while keeping the expiration.
+     *
+     * @param string $oldEmail
+     * @param string $newEmail
+     * @return void
+     */
+    private function syncLimitedEmailList(string $oldEmail, string $newEmail): void
+    {
+        $expirations = $this->getLimitedEmailExpirations();
+        if (!array_key_exists($oldEmail, $expirations)) {
+            return;
+        }
+
+        $expiresAt = $expirations[$oldEmail];
+        unset($expirations[$oldEmail]);
+        $expirations[$newEmail] = $expiresAt;
+
+        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
     }
 
     /**

@@ -36,8 +36,8 @@ Open **Stores → Configuration → Frodo → Antifraud → General**.
 | Daily order count limit | Maximum number of non-canceled/non-closed orders per e-mail per store day. Empty or `0` disables this check. |
 | Daily amount limit | Maximum daily total per e-mail in the website base currency. Empty or `0` disables this check. |
 | Email whitelist | E-mails that bypass daily amount and order-count limits only. Blacklists still apply. Separate values with a new line, comma, semicolon, or space. |
-| Email blacklist | E-mails that are blocked from checkout. Separate values with a new line, comma, semicolon, or space. |
-| Temporary limited emails | E-mails limited for 24 hours by customer admin buttons. Entries are stored as `email:expires_at`. |
+| Email blacklist | E-mails that are blocked from checkout. Customer email changes are synced automatically. Separate values with a new line, comma, semicolon, or space. |
+| Temporary limited emails | E-mails limited for 24 hours by customer admin buttons. Entries are stored as `email:expires_at` and are synced when a customer email changes. |
 | IP blacklist | Exact IP addresses or CIDR ranges to block. Separate values with a new line, comma, semicolon, or space. |
 
 Blocked customers are described as **Order placement is blocked**. Customers temporarily limited by daily count, amount, or admin-applied 24-hour limits are described as **Daily limit reached**. Removing an admin-applied limit also adds the customer e-mail to the whitelist so regular daily limits are bypassed.
@@ -47,4 +47,4 @@ Blocked customers are described as **Order placement is blocked**. Customers tem
 Open a registered customer in the Magento admin customer edit page. The module adds two toggle buttons:
 
 - **Block Orders / Unblock Orders**: adds or removes the customer e-mail from the Email blacklist.
-- **Limit for 24 Hours / Remove Daily Limit**: adds a one-day temporary e-mail restriction or removes it. Removing the restriction adds the customer e-mail to the Email whitelist.
+- **Limit for 24 Hours / Remove Daily Limit**: adds a one-day temporary e-mail restriction or removes it. Removing the restriction adds the customer e-mail to the Email whitelist. If a customer email changes, matching blacklist, whitelist, and temporary limit entries are updated to the new email.
