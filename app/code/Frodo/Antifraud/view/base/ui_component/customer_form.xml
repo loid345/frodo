@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="buttons" xsi:type="array">
+            <item name="frodo_antifraud_block_orders" xsi:type="string">Frodo\Antifraud\Block\Adminhtml\Customer\Edit\Button\BlockOrders</item>
+            <item name="frodo_antifraud_limit_orders" xsi:type="string">Frodo\Antifraud\Block\Adminhtml\Customer\Edit\Button\LimitOrders</item>
+        </item>
+    </argument>
+</form>
