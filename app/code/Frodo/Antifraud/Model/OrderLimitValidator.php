@@ -6,19 +6,23 @@ declare(strict_types=1);
 
 namespace Frodo\Antifraud\Model;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Frodo\Antifraud\Helper\Config;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 class OrderLimitValidator
 {
+    private const UTC_TIMEZONE = 'UTC';
+
     private Config $config;
     private EmailList $emailList;
     private IpMatcher $ipMatcher;
@@ -69,7 +73,7 @@ class OrderLimitValidator
             throw new LocalizedException(__('Order placement is not available from this IP address.'));
         }
 
-        if ($isWhitelisted) {
+        if ($isWhitelisted || $email === '') {
             return;
         }
 
@@ -146,13 +150,13 @@ class OrderLimitValidator
      */
     private function getStoreDayUtcRange(int $storeId): array
     {
-        $timezone = new \DateTimeZone($this->timezone->getConfigTimezone(ScopeInterface::SCOPE_STORE, $storeId));
-        $start = new \DateTimeImmutable('today', $timezone);
+        $timezone = new DateTimeZone($this->timezone->getConfigTimezone(ScopeInterface::SCOPE_STORE, $storeId));
+        $start = new DateTimeImmutable('today', $timezone);
         $end = $start->modify('+1 day');
 
         return [
-            $start->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
-            $end->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+            $start->setTimezone(new DateTimeZone(self::UTC_TIMEZONE))->format('Y-m-d H:i:s'),
+            $end->setTimezone(new DateTimeZone(self::UTC_TIMEZONE))->format('Y-m-d H:i:s'),
         ];
     }
 

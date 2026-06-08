@@ -42,17 +42,19 @@ class IpMatcher
         $ipBinary = inet_pton($ip);
         $blockedIpBinary = inet_pton($blockedIp);
 
-        if ($ipBinary !== false && $blockedIpBinary !== false) {
-            return hash_equals($ipBinary, $blockedIpBinary);
+        if ($ipBinary === false || $blockedIpBinary === false) {
+            return false;
         }
 
-        return strcasecmp($ip, $blockedIp) === 0;
+        return hash_equals($ipBinary, $blockedIpBinary);
     }
 
     private function matchesCidr(string $ip, string $cidr): bool
     {
         [$subnet, $mask] = array_pad(explode('/', $cidr, 2), 2, null);
-        if ($subnet === null || $mask === null || !ctype_digit($mask)) {
+        $subnet = trim((string)$subnet);
+        $mask = trim((string)$mask);
+        if ($subnet === '' || $mask === '' || !ctype_digit($mask)) {
             return false;
         }
 

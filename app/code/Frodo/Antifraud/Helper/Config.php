@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace Frodo\Antifraud\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
 
 class Config extends AbstractHelper
@@ -19,11 +18,6 @@ class Config extends AbstractHelper
     private const XML_PATH_BLACKLIST_EMAILS = 'frodo_antifraud/general/blacklist_emails';
     private const XML_PATH_BLACKLIST_CUSTOMER_IDS = 'frodo_antifraud/general/blacklist_customer_ids';
     private const XML_PATH_BLACKLIST_IPS = 'frodo_antifraud/general/blacklist_ips';
-
-    public function __construct(Context $context)
-    {
-        parent::__construct($context);
-    }
 
     public function isEnabled(int $storeId): bool
     {
@@ -77,15 +71,23 @@ class Config extends AbstractHelper
      */
     public function getBlacklistCustomerIds(int $storeId): array
     {
-        $customerIds = array_map('intval', $this->parseList((string)$this->scopeConfig->getValue(
+        $customerIds = [];
+        foreach ($this->parseList((string)$this->scopeConfig->getValue(
             self::XML_PATH_BLACKLIST_CUSTOMER_IDS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        )));
+        )) as $customerId) {
+            if (!ctype_digit($customerId)) {
+                continue;
+            }
 
-        return array_values(array_filter($customerIds, static function (int $customerId): bool {
-            return $customerId > 0;
-        }));
+            $customerId = (int)$customerId;
+            if ($customerId > 0) {
+                $customerIds[] = $customerId;
+            }
+        }
+
+        return array_values(array_unique($customerIds));
     }
 
     /**
