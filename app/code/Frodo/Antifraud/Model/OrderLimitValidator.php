@@ -23,13 +23,46 @@ class OrderLimitValidator
 {
     private const UTC_TIMEZONE = 'UTC';
 
+    /**
+     * @var Config
+     */
     private Config $config;
+
+    /**
+     * @var EmailList
+     */
     private EmailList $emailList;
+
+    /**
+     * @var IpMatcher
+     */
     private IpMatcher $ipMatcher;
+
+    /**
+     * @var ResourceConnection
+     */
     private ResourceConnection $resourceConnection;
+
+    /**
+     * @var StoreManagerInterface
+     */
     private StoreManagerInterface $storeManager;
+
+    /**
+     * @var TimezoneInterface
+     */
     private TimezoneInterface $timezone;
 
+    /**
+     * Initialize validator dependencies.
+     *
+     * @param Config $config
+     * @param EmailList $emailList
+     * @param IpMatcher $ipMatcher
+     * @param ResourceConnection $resourceConnection
+     * @param StoreManagerInterface $storeManager
+     * @param TimezoneInterface $timezone
+     */
     public function __construct(
         Config $config,
         EmailList $emailList,
@@ -47,6 +80,11 @@ class OrderLimitValidator
     }
 
     /**
+     * Validate order placement against configured antifraud rules.
+     *
+     * @param Quote $quote
+     * @param OrderInterface $order
+     * @return void
      * @throws LocalizedException
      */
     public function validate(Quote $quote, OrderInterface $order): void
@@ -95,12 +133,22 @@ class OrderLimitValidator
         }
     }
 
+    /**
+     * Normalize an email address for storage comparison.
+     *
+     * @param string $email
+     * @return string
+     */
     private function normalizeEmail(string $email): string
     {
         return strtolower(trim($email));
     }
 
     /**
+     * Get existing daily order totals for the quote email and website stores.
+     *
+     * @param Quote $quote
+     * @param string $email
      * @return array{orders_count:int, base_amount_total:float}
      */
     private function getDailyTotals(Quote $quote, string $email): array
@@ -132,6 +180,9 @@ class OrderLimitValidator
     }
 
     /**
+     * Get store IDs that belong to the same website as the quote store.
+     *
+     * @param int $storeId
      * @return int[]
      */
     private function getWebsiteStoreIds(int $storeId): array
@@ -146,6 +197,9 @@ class OrderLimitValidator
     }
 
     /**
+     * Get the current store day range converted to UTC timestamps.
+     *
+     * @param int $storeId
      * @return string[]
      */
     private function getStoreDayUtcRange(int $storeId): array
@@ -160,6 +214,11 @@ class OrderLimitValidator
         ];
     }
 
+    /**
+     * Get the localized limit exception message.
+     *
+     * @return Phrase
+     */
     private function getLimitMessage(): Phrase
     {
         return __('Daily order limit has been exceeded. Please try again later.');

@@ -14,13 +14,27 @@ use Magento\Sales\Api\Data\OrderInterface;
 
 class ValidateOrderPlacement implements ObserverInterface
 {
+    /**
+     * @var OrderLimitValidator
+     */
     private OrderLimitValidator $orderLimitValidator;
 
+    /**
+     * Initialize observer dependencies.
+     *
+     * @param OrderLimitValidator $orderLimitValidator
+     */
     public function __construct(OrderLimitValidator $orderLimitValidator)
     {
         $this->orderLimitValidator = $orderLimitValidator;
     }
 
+    /**
+     * Validate quote and order before order placement.
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         $quote = $observer->getEvent()->getQuote();

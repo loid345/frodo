@@ -8,6 +8,13 @@ namespace Frodo\Antifraud\Model;
 
 class IpMatcher
 {
+    /**
+     * Check whether an IP address matches the blocked IP list.
+     *
+     * @param string $ip
+     * @param array $blockedIps
+     * @return bool
+     */
     public function contains(string $ip, array $blockedIps): bool
     {
         $ip = trim($ip);
@@ -37,6 +44,13 @@ class IpMatcher
         return false;
     }
 
+    /**
+     * Match an exact IPv4 or IPv6 address.
+     *
+     * @param string $ip
+     * @param string $blockedIp
+     * @return bool
+     */
     private function matchesExactIp(string $ip, string $blockedIp): bool
     {
         $ipBinary = inet_pton($ip);
@@ -49,6 +63,13 @@ class IpMatcher
         return hash_equals($ipBinary, $blockedIpBinary);
     }
 
+    /**
+     * Match an IPv4 or IPv6 CIDR range.
+     *
+     * @param string $ip
+     * @param string $cidr
+     * @return bool
+     */
     private function matchesCidr(string $ip, string $cidr): bool
     {
         [$subnet, $mask] = array_pad(explode('/', $cidr, 2), 2, null);
