@@ -58,17 +58,17 @@ class ToggleBlock extends Action implements HttpGetActionInterface
         $redirect->setPath('customer/index/edit', ['id' => $customerId]);
 
         if ($customerId <= 0) {
-            $this->messageManager->addErrorMessage(__('Customer ID is missing.'));
+            $this->messageManager->addErrorMessage(__('Customer is missing.'));
             return $redirect;
         }
 
         try {
-            $this->customerRepository->getById($customerId);
-            if ($this->customerStatusManager->isBlocked($customerId)) {
-                $this->customerStatusManager->unblock($customerId);
+            $customer = $this->customerRepository->getById($customerId);
+            if ($this->customerStatusManager->isBlocked($customer)) {
+                $this->customerStatusManager->unblock($customer);
                 $this->messageManager->addSuccessMessage(__('Order placement has been unblocked.'));
             } else {
-                $this->customerStatusManager->block($customerId);
+                $this->customerStatusManager->block($customer);
                 $this->messageManager->addSuccessMessage(__('Order placement has been blocked.'));
             }
         } catch (NoSuchEntityException $exception) {

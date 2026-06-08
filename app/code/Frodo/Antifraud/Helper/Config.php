@@ -19,9 +19,8 @@ class Config extends AbstractHelper
     public const XML_PATH_DAILY_AMOUNT_LIMIT = 'frodo_antifraud/general/daily_amount_limit';
     public const XML_PATH_WHITELIST_EMAILS = 'frodo_antifraud/general/whitelist_emails';
     public const XML_PATH_BLACKLIST_EMAILS = 'frodo_antifraud/general/blacklist_emails';
-    public const XML_PATH_BLACKLIST_CUSTOMER_IDS = 'frodo_antifraud/general/blacklist_customer_ids';
     public const XML_PATH_BLACKLIST_IPS = 'frodo_antifraud/general/blacklist_ips';
-    public const XML_PATH_LIMITED_CUSTOMER_IDS = 'frodo_antifraud/general/limited_customer_ids';
+    public const XML_PATH_LIMITED_EMAILS = 'frodo_antifraud/general/limited_emails';
 
     private const UTC_TIMEZONE = 'UTC';
 
@@ -97,55 +96,28 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get positive numeric customer ID blacklist entries for the store scope.
+     * Get active temporary limited emails for the store scope.
      *
      * @param int $storeId
-     * @return int[]
+     * @return string[]
      */
-    public function getBlacklistCustomerIds(int $storeId): array
+    public function getLimitedEmails(int $storeId): array
     {
-        $customerIds = [];
-        foreach ($this->parseList((string)$this->scopeConfig->getValue(
-            self::XML_PATH_BLACKLIST_CUSTOMER_IDS,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        )) as $customerId) {
-            if (!ctype_digit($customerId)) {
-                continue;
-            }
-
-            $customerId = (int)$customerId;
-            if ($customerId > 0) {
-                $customerIds[] = $customerId;
-            }
-        }
-
-        return array_values(array_unique($customerIds));
-    }
-
-    /**
-     * Get active temporary limited customer IDs for the store scope.
-     *
-     * @param int $storeId
-     * @return int[]
-     */
-    public function getLimitedCustomerIds(int $storeId): array
-    {
-        $customerIds = [];
+        $emails = [];
         $now = new DateTimeImmutable('now', new DateTimeZone(self::UTC_TIMEZONE));
 
         foreach ($this->parseList((string)$this->scopeConfig->getValue(
-            self::XML_PATH_LIMITED_CUSTOMER_IDS,
+            self::XML_PATH_LIMITED_EMAILS,
             ScopeInterface::SCOPE_STORE,
             $storeId
         )) as $entry) {
             $parts = explode(':', $entry, 2);
-            if (count($parts) !== 2 || !ctype_digit($parts[0])) {
+            if (count($parts) !== 2) {
                 continue;
             }
 
-            $customerId = (int)$parts[0];
-            if ($customerId <= 0) {
+            $email = strtolower(trim($parts[0]));
+            if ($email === '') {
                 continue;
             }
 
@@ -156,11 +128,11 @@ class Config extends AbstractHelper
             }
 
             if ($expiresAt > $now) {
-                $customerIds[] = $customerId;
+                $emails[] = $email;
             }
         }
 
-        return array_values(array_unique($customerIds));
+        return array_values(array_unique($emails));
     }
 
     /**

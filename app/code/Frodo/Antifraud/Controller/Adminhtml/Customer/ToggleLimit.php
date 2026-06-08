@@ -58,19 +58,19 @@ class ToggleLimit extends Action implements HttpGetActionInterface
         $redirect->setPath('customer/index/edit', ['id' => $customerId]);
 
         if ($customerId <= 0) {
-            $this->messageManager->addErrorMessage(__('Customer ID is missing.'));
+            $this->messageManager->addErrorMessage(__('Customer is missing.'));
             return $redirect;
         }
 
         try {
             $customer = $this->customerRepository->getById($customerId);
-            if ($this->customerStatusManager->isLimited($customerId)) {
+            if ($this->customerStatusManager->isLimited($customer)) {
                 $this->customerStatusManager->removeLimitAndWhitelist($customer);
                 $this->messageManager->addSuccessMessage(
                     __('Daily limit has been removed and the customer email has been whitelisted.')
                 );
             } else {
-                $this->customerStatusManager->limitForOneDay($customerId);
+                $this->customerStatusManager->limitForOneDay($customer);
                 $this->messageManager->addSuccessMessage(__('Daily limit has been applied for 24 hours.'));
             }
         } catch (NoSuchEntityException $exception) {

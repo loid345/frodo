@@ -110,12 +110,7 @@ class OrderLimitValidator
             throw new LocalizedException(__('Order placement is blocked.'));
         }
 
-        $customerId = (int)($order->getCustomerId() ?: $quote->getCustomerId());
-        if ($customerId > 0 && in_array($customerId, $this->config->getBlacklistCustomerIds($storeId), true)) {
-            throw new LocalizedException(__('Order placement is blocked.'));
-        }
-
-        if ($customerId > 0 && in_array($customerId, $this->config->getLimitedCustomerIds($storeId), true)) {
+        if ($email !== '' && in_array($email, $this->config->getLimitedEmails($storeId), true)) {
             throw new LocalizedException($this->getLimitMessage());
         }
 

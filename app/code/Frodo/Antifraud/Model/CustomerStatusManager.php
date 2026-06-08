@@ -55,68 +55,87 @@ class CustomerStatusManager
     }
 
     /**
-     * Check whether the customer is in the order blacklist.
+     * Check whether the customer email is in the order blacklist.
      *
-     * @param int $customerId
+     * @param CustomerInterface $customer
      * @return bool
      */
-    public function isBlocked(int $customerId): bool
+    public function isBlocked(CustomerInterface $customer): bool
     {
-        return in_array($customerId, $this->getBlacklistCustomerIds(), true);
+        $email = $this->getCustomerEmail($customer);
+
+        return $email !== '' && in_array($email, $this->getBlacklistEmails(), true);
     }
 
     /**
-     * Add the customer to the order blacklist.
+     * Add the customer email to the order blacklist.
      *
-     * @param int $customerId
+     * @param CustomerInterface $customer
      * @return void
      */
-    public function block(int $customerId): void
+    public function block(CustomerInterface $customer): void
     {
-        $customerIds = $this->getBlacklistCustomerIds();
-        $customerIds[] = $customerId;
-        $this->saveList(Config::XML_PATH_BLACKLIST_CUSTOMER_IDS, $this->normalizeIds($customerIds));
+        $email = $this->getCustomerEmail($customer);
+        if ($email === '') {
+            return;
+        }
+
+        $emails = $this->getBlacklistEmails();
+        $emails[] = $email;
+        $this->saveList(Config::XML_PATH_BLACKLIST_EMAILS, $this->normalizeEmails($emails));
     }
 
     /**
-     * Remove the customer from the order blacklist.
+     * Remove the customer email from the order blacklist.
      *
-     * @param int $customerId
+     * @param CustomerInterface $customer
      * @return void
      */
-    public function unblock(int $customerId): void
+    public function unblock(CustomerInterface $customer): void
     {
-        $customerIds = array_filter(
-            $this->getBlacklistCustomerIds(),
-            static function (int $existingCustomerId) use ($customerId): bool {
-                return $existingCustomerId !== $customerId;
+        $email = $this->getCustomerEmail($customer);
+        if ($email === '') {
+            return;
+        }
+
+        $emails = array_filter(
+            $this->getBlacklistEmails(),
+            static function (string $existingEmail) use ($email): bool {
+                return $existingEmail !== $email;
             }
         );
-        $this->saveList(Config::XML_PATH_BLACKLIST_CUSTOMER_IDS, $this->normalizeIds($customerIds));
+        $this->saveList(Config::XML_PATH_BLACKLIST_EMAILS, $this->normalizeEmails($emails));
     }
 
     /**
-     * Check whether the customer has an active temporary daily-limit restriction.
+     * Check whether the customer email has an active temporary daily-limit restriction.
      *
-     * @param int $customerId
+     * @param CustomerInterface $customer
      * @return bool
      */
-    public function isLimited(int $customerId): bool
+    public function isLimited(CustomerInterface $customer): bool
     {
-        return array_key_exists($customerId, $this->getLimitedCustomerExpirations());
+        $email = $this->getCustomerEmail($customer);
+
+        return $email !== '' && array_key_exists($email, $this->getLimitedEmailExpirations());
     }
 
     /**
-     * Limit the customer for one day.
+     * Limit the customer email for one day.
      *
-     * @param int $customerId
+     * @param CustomerInterface $customer
      * @return void
      */
-    public function limitForOneDay(int $customerId): void
+    public function limitForOneDay(CustomerInterface $customer): void
     {
-        $expirations = $this->getLimitedCustomerExpirations();
-        $expirations[$customerId] = $this->getNow()->modify(self::LIMIT_INTERVAL)->format(DATE_ATOM);
-        $this->saveList(Config::XML_PATH_LIMITED_CUSTOMER_IDS, $this->formatLimitedCustomerEntries($expirations));
+        $email = $this->getCustomerEmail($customer);
+        if ($email === '') {
+            return;
+        }
+
+        $expirations = $this->getLimitedEmailExpirations();
+        $expirations[$email] = $this->getNow()->modify(self::LIMIT_INTERVAL)->format(DATE_ATOM);
+        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
     }
 
     /**
@@ -127,15 +146,14 @@ class CustomerStatusManager
      */
     public function removeLimitAndWhitelist(CustomerInterface $customer): void
     {
-        $customerId = (int)$customer->getId();
-        $expirations = $this->getLimitedCustomerExpirations();
-        unset($expirations[$customerId]);
-        $this->saveList(Config::XML_PATH_LIMITED_CUSTOMER_IDS, $this->formatLimitedCustomerEntries($expirations));
-
-        $email = strtolower(trim((string)$customer->getEmail()));
+        $email = $this->getCustomerEmail($customer);
         if ($email === '') {
             return;
         }
+
+        $expirations = $this->getLimitedEmailExpirations();
+        unset($expirations[$email]);
+        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
 
         $emails = $this->getConfiguredList(Config::XML_PATH_WHITELIST_EMAILS);
         $emails[] = $email;
@@ -143,33 +161,33 @@ class CustomerStatusManager
     }
 
     /**
-     * Get configured customer IDs in the order blacklist.
+     * Get configured emails in the order blacklist.
      *
-     * @return int[]
+     * @return string[]
      */
-    private function getBlacklistCustomerIds(): array
+    private function getBlacklistEmails(): array
     {
-        return $this->normalizeIds($this->getConfiguredList(Config::XML_PATH_BLACKLIST_CUSTOMER_IDS));
+        return $this->normalizeEmails($this->getConfiguredList(Config::XML_PATH_BLACKLIST_EMAILS));
     }
 
     /**
-     * Get active customer limit expiration entries keyed by customer ID.
+     * Get active limited email expiration entries keyed by email.
      *
-     * @return array<int,string>
+     * @return array<string,string>
      */
-    private function getLimitedCustomerExpirations(): array
+    private function getLimitedEmailExpirations(): array
     {
         $now = $this->getNow();
         $expirations = [];
 
-        foreach ($this->getConfiguredList(Config::XML_PATH_LIMITED_CUSTOMER_IDS) as $entry) {
+        foreach ($this->getConfiguredList(Config::XML_PATH_LIMITED_EMAILS) as $entry) {
             $parts = explode(':', $entry, 2);
-            if (count($parts) !== 2 || !ctype_digit($parts[0])) {
+            if (count($parts) !== 2) {
                 continue;
             }
 
-            $customerId = (int)$parts[0];
-            if ($customerId <= 0) {
+            $email = $this->normalizeEmail($parts[0]);
+            if ($email === '') {
                 continue;
             }
 
@@ -180,7 +198,7 @@ class CustomerStatusManager
             }
 
             if ($expiresAt > $now) {
-                $expirations[$customerId] = $expiresAt->setTimezone(
+                $expirations[$email] = $expiresAt->setTimezone(
                     new DateTimeZone(self::UTC_TIMEZONE)
                 )->format(DATE_ATOM);
             }
@@ -192,15 +210,15 @@ class CustomerStatusManager
     /**
      * Format temporary limit entries for config storage.
      *
-     * @param array<int,string> $expirations
+     * @param array<string,string> $expirations
      * @return string[]
      */
-    private function formatLimitedCustomerEntries(array $expirations): array
+    private function formatLimitedEmailEntries(array $expirations): array
     {
         ksort($expirations);
         $entries = [];
-        foreach ($expirations as $customerId => $expiresAt) {
-            $entries[] = (int)$customerId . ':' . $expiresAt;
+        foreach ($expirations as $email => $expiresAt) {
+            $entries[] = $email . ':' . $expiresAt;
         }
 
         return $entries;
@@ -232,40 +250,13 @@ class CustomerStatusManager
      * Save a config list into the default scope and clear config cache.
      *
      * @param string $path
-     * @param string[]|int[] $items
+     * @param string[] $items
      * @return void
      */
     private function saveList(string $path, array $items): void
     {
         $this->configWriter->save($path, implode(PHP_EOL, $items));
         $this->cacheTypeList->cleanType(ConfigCache::TYPE_IDENTIFIER);
-    }
-
-    /**
-     * Normalize customer IDs.
-     *
-     * @param mixed[] $customerIds
-     * @return int[]
-     */
-    private function normalizeIds(array $customerIds): array
-    {
-        $normalizedIds = [];
-        foreach ($customerIds as $customerId) {
-            $customerId = (string)$customerId;
-            if (!ctype_digit($customerId)) {
-                continue;
-            }
-
-            $customerId = (int)$customerId;
-            if ($customerId > 0) {
-                $normalizedIds[] = $customerId;
-            }
-        }
-
-        $normalizedIds = array_values(array_unique($normalizedIds));
-        sort($normalizedIds);
-
-        return $normalizedIds;
     }
 
     /**
@@ -278,13 +269,38 @@ class CustomerStatusManager
     {
         $normalizedEmails = [];
         foreach ($emails as $email) {
-            $email = strtolower(trim((string)$email));
+            $email = $this->normalizeEmail((string)$email);
             if ($email !== '') {
                 $normalizedEmails[] = $email;
             }
         }
 
-        return array_values(array_unique($normalizedEmails));
+        $normalizedEmails = array_values(array_unique($normalizedEmails));
+        sort($normalizedEmails);
+
+        return $normalizedEmails;
+    }
+
+    /**
+     * Normalize one email entry.
+     *
+     * @param string $email
+     * @return string
+     */
+    private function normalizeEmail(string $email): string
+    {
+        return strtolower(trim($email));
+    }
+
+    /**
+     * Get the normalized customer email.
+     *
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    private function getCustomerEmail(CustomerInterface $customer): string
+    {
+        return $this->normalizeEmail((string)$customer->getEmail());
     }
 
     /**
