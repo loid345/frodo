@@ -14,7 +14,6 @@ use Magento\Framework\App\Cache\Type\Config as ConfigCache;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Store\Model\ScopeInterface;
 
 class CustomerStatusManager
 {
@@ -321,7 +320,7 @@ class CustomerStatusManager
     {
         $value = (string)$this->scopeConfig->getValue(
             $path,
-            ScopeInterface::SCOPE_DEFAULT,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             self::DEFAULT_SCOPE_ID
         );
         $items = preg_split('/[\s,;]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];

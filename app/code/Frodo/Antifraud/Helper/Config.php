@@ -9,6 +9,7 @@ namespace Frodo\Antifraud\Helper;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 
@@ -66,50 +67,44 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get whitelist email entries for the store scope.
+     * Get whitelist email entries from the default scope.
      *
-     * @param int $storeId
      * @return string[]
      */
-    public function getWhitelistEmails(int $storeId): array
+    public function getWhitelistEmails(): array
     {
         return $this->parseList((string)$this->scopeConfig->getValue(
             self::XML_PATH_WHITELIST_EMAILS,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
         ));
     }
 
     /**
-     * Get blacklist email entries for the store scope.
+     * Get blacklist email entries from the default scope.
      *
-     * @param int $storeId
      * @return string[]
      */
-    public function getBlacklistEmails(int $storeId): array
+    public function getBlacklistEmails(): array
     {
         return $this->parseList((string)$this->scopeConfig->getValue(
             self::XML_PATH_BLACKLIST_EMAILS,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
         ));
     }
 
     /**
-     * Get active temporary limited emails for the store scope.
+     * Get active temporary limited emails from the default scope.
      *
-     * @param int $storeId
      * @return string[]
      */
-    public function getLimitedEmails(int $storeId): array
+    public function getLimitedEmails(): array
     {
         $emails = [];
         $now = new DateTimeImmutable('now', new DateTimeZone(self::UTC_TIMEZONE));
 
         foreach ($this->parseList((string)$this->scopeConfig->getValue(
             self::XML_PATH_LIMITED_EMAILS,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
         )) as $entry) {
             $parts = explode(':', $entry, 2);
             if (count($parts) !== 2) {

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <frodo_antifraud>
+            <general>
+                <enabled>0</enabled>
+                <daily_order_count_limit>0</daily_order_count_limit>
+                <daily_amount_limit>0</daily_amount_limit>
+            </general>
+        </frodo_antifraud>
+    </default>
+</config>

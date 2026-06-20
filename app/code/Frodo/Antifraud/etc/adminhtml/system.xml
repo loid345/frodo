@@ -18,22 +18,22 @@
                 <field id="daily_order_count_limit" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Daily order count limit</label>
                     <validate>validate-zero-or-greater validate-digits</validate>
-                    <comment>Maximum number of orders per email per store day. Leave empty or set 0 to disable.</comment>
+                    <comment>Maximum number of orders per email per store day. Set 0 for no restrictions.</comment>
                 </field>
                 <field id="daily_amount_limit" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Daily amount limit</label>
                     <validate>validate-zero-or-greater</validate>
-                    <comment>Maximum total order amount per email per store day. The value is compared with order base totals, so configure it in the website base currency. Leave empty or set 0 to disable.</comment>
+                    <comment>Maximum total order amount per email per store day. The value is compared with order base totals, so configure it in the website base currency. Set 0 for no restrictions.</comment>
                 </field>
-                <field id="whitelist_emails" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="whitelist_emails" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Email whitelist</label>
                     <comment>Emails that bypass daily order count and amount limits. Blacklists still block these emails. Separate by new line, comma, semicolon or spaces.</comment>
                 </field>
-                <field id="blacklist_emails" translate="label comment" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="blacklist_emails" translate="label comment" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Email blacklist</label>
                     <comment>Orders from these emails are blocked. Customer email changes are synced automatically. Separate by new line, comma, semicolon or spaces.</comment>
                 </field>
-                <field id="limited_emails" translate="label comment" type="textarea" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="limited_emails" translate="label comment" type="textarea" sortOrder="65" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Temporary limited emails</label>
                     <comment>Emails temporarily limited by admin buttons. Entries are stored as email:expires_at and customer email changes are synced automatically.</comment>
                 </field>

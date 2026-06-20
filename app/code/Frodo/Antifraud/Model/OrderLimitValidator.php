@@ -18,7 +18,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
-use Zend_Db_Expr;
+use Magento\Framework\DB\Sql\Expression;
 
 class OrderLimitValidator
 {
@@ -104,14 +104,10 @@ class OrderLimitValidator
         }
 
         $email = $this->normalizeEmail((string)($order->getCustomerEmail() ?: $quote->getCustomerEmail()));
-        $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails($storeId));
+        $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails());
 
-        if ($this->emailList->contains($email, $this->config->getBlacklistEmails($storeId))) {
+        if ($this->emailList->contains($email, $this->config->getBlacklistEmails())) {
             throw new LocalizedException(__('Order placement is blocked.'));
-        }
-
-        if ($email !== '' && in_array($email, $this->config->getLimitedEmails($storeId), true)) {
-            throw new LocalizedException($this->getLimitMessage());
         }
 
         $remoteIp = $this->getRemoteIp($quote);
@@ -121,6 +117,10 @@ class OrderLimitValidator
 
         if ($isWhitelisted || $email === '') {
             return;
+        }
+
+        if ($email !== '' && in_array($email, $this->config->getLimitedEmails(), true)) {
+            throw new LocalizedException($this->getLimitMessage());
         }
 
         $countLimit = $this->config->getDailyOrderCountLimit($storeId);
@@ -191,8 +191,8 @@ class OrderLimitValidator
         $select = $collection->getSelect();
         $select->reset(Select::COLUMNS)
             ->columns([
-                'orders_count' => new Zend_Db_Expr('COUNT(*)'),
-                'base_amount_total' => new Zend_Db_Expr(
+                'orders_count' => new Expression('COUNT(*)'),
+                'base_amount_total' => new Expression(
                     'COALESCE(SUM(main_table.base_grand_total), 0)'
                 )
             ])
