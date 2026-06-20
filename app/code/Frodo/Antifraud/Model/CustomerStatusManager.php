@@ -8,49 +8,51 @@ namespace Frodo\Antifraud\Model;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use Frodo\Antifraud\Helper\Config;
 use Magento\Customer\Api\Data\CustomerInterface;
-use Magento\Framework\App\Cache\Type\Config as ConfigCache;
-use Magento\Framework\App\Cache\TypeListInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Config\Storage\WriterInterface;
 
 class CustomerStatusManager
 {
-    private const DEFAULT_SCOPE_ID = 0;
     private const LIMIT_INTERVAL = '+1 day';
     private const UTC_TIMEZONE = 'UTC';
 
     /**
-     * @var ScopeConfigInterface
+     * @var BlacklistEmailRepository
      */
-    private ScopeConfigInterface $scopeConfig;
+    private BlacklistEmailRepository $blacklistEmailRepo;
 
     /**
-     * @var WriterInterface
+     * @var WhitelistEmailRepository
      */
-    private WriterInterface $configWriter;
+    private WhitelistEmailRepository $whitelistEmailRepo;
 
     /**
-     * @var TypeListInterface
+     * @var LimitedEmailRepository
      */
-    private TypeListInterface $cacheTypeList;
+    private LimitedEmailRepository $limitedEmailRepo;
+
+    /**
+     * @var ActionLogger
+     */
+    private ActionLogger $actionLogger;
 
     /**
      * Initialize customer status dependencies.
      *
-     * @param ScopeConfigInterface $scopeConfig
-     * @param WriterInterface $configWriter
-     * @param TypeListInterface $cacheTypeList
+     * @param BlacklistEmailRepository $blacklistEmailRepo
+     * @param WhitelistEmailRepository $whitelistEmailRepo
+     * @param LimitedEmailRepository $limitedEmailRepo
+     * @param ActionLogger $actionLogger
      */
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
-        WriterInterface $configWriter,
-        TypeListInterface $cacheTypeList
+        BlacklistEmailRepository $blacklistEmailRepo,
+        WhitelistEmailRepository $whitelistEmailRepo,
+        LimitedEmailRepository $limitedEmailRepo,
+        ActionLogger $actionLogger
     ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->configWriter = $configWriter;
-        $this->cacheTypeList = $cacheTypeList;
+        $this->blacklistEmailRepo = $blacklistEmailRepo;
+        $this->whitelistEmailRepo = $whitelistEmailRepo;
+        $this->limitedEmailRepo = $limitedEmailRepo;
+        $this->actionLogger = $actionLogger;
     }
 
     /**
@@ -63,7 +65,7 @@ class CustomerStatusManager
     {
         $email = $this->getCustomerEmail($customer);
 
-        return $email !== '' && in_array($email, $this->getBlacklistEmails(), true);
+        return $email !== '' && $this->blacklistEmailRepo->emailExists($email);
     }
 
     /**
@@ -79,9 +81,22 @@ class CustomerStatusManager
             return;
         }
 
-        $emails = $this->getBlacklistEmails();
-        $emails[] = $email;
-        $this->saveList(Config::XML_PATH_BLACKLIST_EMAILS, $this->normalizeEmails($emails));
+        if ($this->blacklistEmailRepo->emailExists($email)) {
+            return;
+        }
+
+        $entity = new BlacklistEmail();
+        $entity->setEmail($email);
+        $entity->setReason('Blocked via admin customer page');
+        $this->blacklistEmailRepo->save($entity);
+
+        $this->actionLogger->log(
+            'blacklist_add',
+            'email',
+            $email,
+            $this->getCustomerId($customer),
+            'Blocked via admin customer page'
+        );
     }
 
     /**
@@ -97,13 +112,15 @@ class CustomerStatusManager
             return;
         }
 
-        $emails = array_filter(
-            $this->getBlacklistEmails(),
-            static function (string $existingEmail) use ($email): bool {
-                return $existingEmail !== $email;
-            }
+        $this->blacklistEmailRepo->deleteByEmail($email);
+
+        $this->actionLogger->log(
+            'blacklist_remove',
+            'email',
+            $email,
+            $this->getCustomerId($customer),
+            'Unblocked via admin customer page'
         );
-        $this->saveList(Config::XML_PATH_BLACKLIST_EMAILS, $this->normalizeEmails($emails));
     }
 
     /**
@@ -116,7 +133,7 @@ class CustomerStatusManager
     {
         $email = $this->getCustomerEmail($customer);
 
-        return $email !== '' && array_key_exists($email, $this->getLimitedEmailExpirations());
+        return $email !== '' && $this->limitedEmailRepo->isActiveLimited($email);
     }
 
     /**
@@ -132,9 +149,25 @@ class CustomerStatusManager
             return;
         }
 
-        $expirations = $this->getLimitedEmailExpirations();
-        $expirations[$email] = $this->getNow()->modify(self::LIMIT_INTERVAL)->format(DATE_ATOM);
-        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
+        $expiresAt = (new DateTimeImmutable('now', new DateTimeZone(self::UTC_TIMEZONE)))
+            ->modify(self::LIMIT_INTERVAL)
+            ->format('Y-m-d H:i:s');
+
+        $entity = $this->limitedEmailRepo->getByEmail($email);
+        if ($entity === null) {
+            $entity = new LimitedEmail();
+            $entity->setEmail($email);
+        }
+        $entity->setExpiresAt($expiresAt);
+        $this->limitedEmailRepo->save($entity);
+
+        $this->actionLogger->log(
+            'limit_add',
+            'email',
+            $email,
+            $this->getCustomerId($customer),
+            sprintf('Limited until %s', $expiresAt)
+        );
     }
 
     /**
@@ -150,13 +183,25 @@ class CustomerStatusManager
             return;
         }
 
-        $expirations = $this->getLimitedEmailExpirations();
-        unset($expirations[$email]);
-        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
+        $customerId = $this->getCustomerId($customer);
 
-        $emails = $this->getConfiguredList(Config::XML_PATH_WHITELIST_EMAILS);
-        $emails[] = $email;
-        $this->saveList(Config::XML_PATH_WHITELIST_EMAILS, $this->normalizeEmails($emails));
+        $this->limitedEmailRepo->deleteByEmail($email);
+        $this->actionLogger->log('limit_remove', 'email', $email, $customerId, 'Limit removed via admin');
+
+        if (!$this->whitelistEmailRepo->emailExists($email)) {
+            $entity = new WhitelistEmail();
+            $entity->setEmail($email);
+            $entity->setReason('Auto-whitelisted on limit removal');
+            $this->whitelistEmailRepo->save($entity);
+
+            $this->actionLogger->log(
+                'whitelist_add',
+                'email',
+                $email,
+                $customerId,
+                'Auto-whitelisted on limit removal'
+            );
+        }
     }
 
     /**
@@ -174,197 +219,77 @@ class CustomerStatusManager
             return;
         }
 
-        $this->syncEmailList(Config::XML_PATH_BLACKLIST_EMAILS, $oldEmail, $newEmail);
-        $this->syncEmailList(Config::XML_PATH_WHITELIST_EMAILS, $oldEmail, $newEmail);
-        $this->syncLimitedEmailList($oldEmail, $newEmail);
-    }
+        $this->syncEmailInRepo($this->blacklistEmailRepo, $oldEmail, $newEmail);
+        $this->syncEmailInRepo($this->whitelistEmailRepo, $oldEmail, $newEmail);
+        $this->syncLimitedEmail($oldEmail, $newEmail);
 
-    /**
-     * Get configured emails in the order blacklist.
-     *
-     * @return string[]
-     */
-    private function getBlacklistEmails(): array
-    {
-        return $this->normalizeEmails($this->getConfiguredList(Config::XML_PATH_BLACKLIST_EMAILS));
-    }
-
-    /**
-     * Replace an email in a plain email config list.
-     *
-     * @param string $path
-     * @param string $oldEmail
-     * @param string $newEmail
-     * @return void
-     */
-    private function syncEmailList(string $path, string $oldEmail, string $newEmail): void
-    {
-        $emails = $this->normalizeEmails($this->getConfiguredList($path));
-        if (!in_array($oldEmail, $emails, true)) {
-            return;
-        }
-
-        $updatedEmails = array_map(
-            static function (string $email) use ($oldEmail, $newEmail): string {
-                return $email === $oldEmail ? $newEmail : $email;
-            },
-            $emails
+        $this->actionLogger->log(
+            'email_sync',
+            'email',
+            $newEmail,
+            null,
+            sprintf('%s → %s', $oldEmail, $newEmail)
         );
-
-        $this->saveList($path, $this->normalizeEmails($updatedEmails));
     }
 
     /**
-     * Replace an email in the temporary limit config list while keeping the expiration.
+     * Sync an email change in a blacklist or whitelist repository.
+     *
+     * @param BlacklistEmailRepository|WhitelistEmailRepository $repo
+     * @param string $oldEmail
+     * @param string $newEmail
+     * @return void
+     */
+    private function syncEmailInRepo($repo, string $oldEmail, string $newEmail): void
+    {
+        $entity = $repo->getByEmail($oldEmail);
+        if ($entity === null) {
+            return;
+        }
+
+        $existingNew = $repo->getByEmail($newEmail);
+        if ($existingNew !== null) {
+            $repo->delete($entity);
+            return;
+        }
+
+        $entity->setEmail($newEmail);
+        $repo->save($entity);
+    }
+
+    /**
+     * Sync an email change in the limited email repository.
      *
      * @param string $oldEmail
      * @param string $newEmail
      * @return void
      */
-    private function syncLimitedEmailList(string $oldEmail, string $newEmail): void
+    private function syncLimitedEmail(string $oldEmail, string $newEmail): void
     {
-        $expirations = $this->getLimitedEmailExpirations();
-        if (!array_key_exists($oldEmail, $expirations)) {
+        $entity = $this->limitedEmailRepo->getByEmail($oldEmail);
+        if ($entity === null) {
             return;
         }
 
-        $expiresAt = $expirations[$oldEmail];
-        unset($expirations[$oldEmail]);
-
-        if (isset($expirations[$newEmail]) && $this->isLaterExpiration($expirations[$newEmail], $expiresAt)) {
-            $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
-            return;
-        }
-
-        $expirations[$newEmail] = $expiresAt;
-        $this->saveList(Config::XML_PATH_LIMITED_EMAILS, $this->formatLimitedEmailEntries($expirations));
-    }
-
-    /**
-     * Check whether the first expiration is later than the second one.
-     *
-     * @param string $firstExpiresAt
-     * @param string $secondExpiresAt
-     * @return bool
-     */
-    private function isLaterExpiration(string $firstExpiresAt, string $secondExpiresAt): bool
-    {
-        try {
-            return new DateTimeImmutable($firstExpiresAt) > new DateTimeImmutable($secondExpiresAt);
-        } catch (\Exception $exception) {
-            return false;
-        }
-    }
-
-    /**
-     * Get active limited email expiration entries keyed by email.
-     *
-     * @return array<string,string>
-     */
-    private function getLimitedEmailExpirations(): array
-    {
-        $now = $this->getNow();
-        $expirations = [];
-
-        foreach ($this->getConfiguredList(Config::XML_PATH_LIMITED_EMAILS) as $entry) {
-            $parts = explode(':', $entry, 2);
-            if (count($parts) !== 2) {
-                continue;
-            }
-
-            $email = $this->normalizeEmail($parts[0]);
-            if ($email === '') {
-                continue;
-            }
-
+        $existingNew = $this->limitedEmailRepo->getByEmail($newEmail);
+        if ($existingNew !== null) {
             try {
-                $expiresAt = new DateTimeImmutable($parts[1]);
+                $oldExpires = new DateTimeImmutable($entity->getExpiresAt());
+                $newExpires = new DateTimeImmutable($existingNew->getExpiresAt());
+                if ($newExpires > $oldExpires) {
+                    $this->limitedEmailRepo->delete($entity);
+                    return;
+                }
             } catch (\Exception $exception) {
-                continue;
+                $this->limitedEmailRepo->delete($entity);
+                return;
             }
 
-            if ($expiresAt > $now) {
-                $expirations[$email] = $expiresAt->setTimezone(
-                    new DateTimeZone(self::UTC_TIMEZONE)
-                )->format(DATE_ATOM);
-            }
+            $this->limitedEmailRepo->delete($existingNew);
         }
 
-        return $expirations;
-    }
-
-    /**
-     * Format temporary limit entries for config storage.
-     *
-     * @param array<string,string> $expirations
-     * @return string[]
-     */
-    private function formatLimitedEmailEntries(array $expirations): array
-    {
-        ksort($expirations);
-        $entries = [];
-        foreach ($expirations as $email => $expiresAt) {
-            $entries[] = $email . ':' . $expiresAt;
-        }
-
-        return $entries;
-    }
-
-    /**
-     * Get a raw delimited config list from the default scope.
-     *
-     * @param string $path
-     * @return string[]
-     */
-    private function getConfiguredList(string $path): array
-    {
-        $value = (string)$this->scopeConfig->getValue(
-            $path,
-            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            self::DEFAULT_SCOPE_ID
-        );
-        $items = preg_split('/[\s,;]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $items = array_map('trim', $items);
-        $items = array_filter($items, static function (string $item): bool {
-            return $item !== '';
-        });
-
-        return array_values(array_unique($items));
-    }
-
-    /**
-     * Save a config list into the default scope and clear config cache.
-     *
-     * @param string $path
-     * @param string[] $items
-     * @return void
-     */
-    private function saveList(string $path, array $items): void
-    {
-        $this->configWriter->save($path, implode(PHP_EOL, $items));
-        $this->cacheTypeList->cleanType(ConfigCache::TYPE_IDENTIFIER);
-    }
-
-    /**
-     * Normalize email entries.
-     *
-     * @param string[] $emails
-     * @return string[]
-     */
-    private function normalizeEmails(array $emails): array
-    {
-        $normalizedEmails = [];
-        foreach ($emails as $email) {
-            $email = $this->normalizeEmail((string)$email);
-            if ($email !== '') {
-                $normalizedEmails[] = $email;
-            }
-        }
-
-        $normalizedEmails = array_values(array_unique($normalizedEmails));
-        sort($normalizedEmails);
-
-        return $normalizedEmails;
+        $entity->setEmail($newEmail);
+        $this->limitedEmailRepo->save($entity);
     }
 
     /**
@@ -390,12 +315,15 @@ class CustomerStatusManager
     }
 
     /**
-     * Get the current UTC date and time.
+     * Get the customer ID if available.
      *
-     * @return DateTimeImmutable
+     * @param CustomerInterface $customer
+     * @return int|null
      */
-    private function getNow(): DateTimeImmutable
+    private function getCustomerId(CustomerInterface $customer): ?int
     {
-        return new DateTimeImmutable('now', new DateTimeZone(self::UTC_TIMEZONE));
+        $id = $customer->getId();
+
+        return $id !== null ? (int)$id : null;
     }
 }

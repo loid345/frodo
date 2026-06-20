@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <!-- Email Blacklist (global scope) -->
+    <table name="frodo_antifraud_blacklist_email" resource="default" engine="innodb"
+           comment="Frodo Antifraud Email Blacklist">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="varchar" name="email" nullable="false" length="255"
+                comment="Blocked Email Address"/>
+        <column xsi:type="varchar" name="reason" nullable="true" length="255"
+                comment="Block Reason"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="FRODO_ANTIFRAUD_BLACKLIST_EMAIL_EMAIL">
+            <column name="email"/>
+        </constraint>
+    </table>
+
+    <!-- Email Whitelist (global scope) -->
+    <table name="frodo_antifraud_whitelist_email" resource="default" engine="innodb"
+           comment="Frodo Antifraud Email Whitelist">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="varchar" name="email" nullable="false" length="255"
+                comment="Whitelisted Email Address"/>
+        <column xsi:type="varchar" name="reason" nullable="true" length="255"
+                comment="Whitelist Reason"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="FRODO_ANTIFRAUD_WHITELIST_EMAIL_EMAIL">
+            <column name="email"/>
+        </constraint>
+    </table>
+
+    <!-- IP Blacklist (store-scoped) -->
+    <table name="frodo_antifraud_blacklist_ip" resource="default" engine="innodb"
+           comment="Frodo Antifraud IP Blacklist">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="varchar" name="ip_address" nullable="false" length="45"
+                comment="Blocked IP Address or CIDR"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" default="0"
+                comment="Store ID"/>
+        <column xsi:type="varchar" name="reason" nullable="true" length="255"
+                comment="Block Reason"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="FRODO_ANTIFRAUD_BLACKLIST_IP_IP_STORE">
+            <column name="ip_address"/>
+            <column name="store_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FRODO_ANTIFRAUD_BLACKLIST_IP_STORE_ID"
+                    table="frodo_antifraud_blacklist_ip" column="store_id"
+                    referenceTable="store" referenceColumn="store_id"
+                    onDelete="CASCADE"/>
+    </table>
+
+    <!-- Temporary Email Limits (global scope, with expiration) -->
+    <table name="frodo_antifraud_limited_email" resource="default" engine="innodb"
+           comment="Frodo Antifraud Temporary Email Limits">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="varchar" name="email" nullable="false" length="255"
+                comment="Limited Email Address"/>
+        <column xsi:type="timestamp" name="expires_at" on_update="false" nullable="false"
+                comment="Limit Expiration"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="FRODO_ANTIFRAUD_LIMITED_EMAIL_EMAIL">
+            <column name="email"/>
+        </constraint>
+    </table>
+
+    <!-- Audit Action Log -->
+    <table name="frodo_antifraud_action_log" resource="default" engine="innodb"
+           comment="Frodo Antifraud Action Log">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="varchar" name="action_type" nullable="false" length="50"
+                comment="Action Type"/>
+        <column xsi:type="varchar" name="target_type" nullable="false" length="30"
+                comment="Target Type (email or ip)"/>
+        <column xsi:type="varchar" name="target_value" nullable="false" length="255"
+                comment="Target Value (email or IP address)"/>
+        <column xsi:type="int" name="admin_user_id" unsigned="true" nullable="true"
+                comment="Admin User ID"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true"
+                comment="Customer ID"/>
+        <column xsi:type="varchar" name="details" nullable="true" length="500"
+                comment="Additional Details"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <index referenceId="FRODO_ANTIFRAUD_ACTION_LOG_ACTION_TYPE" indexType="btree">
+            <column name="action_type"/>
+        </index>
+        <index referenceId="FRODO_ANTIFRAUD_ACTION_LOG_TARGET_VALUE" indexType="btree">
+            <column name="target_value"/>
+        </index>
+        <index referenceId="FRODO_ANTIFRAUD_ACTION_LOG_CUSTOMER_ID" indexType="btree">
+            <column name="customer_id"/>
+        </index>
+        <index referenceId="FRODO_ANTIFRAUD_ACTION_LOG_ADMIN_USER_ID" indexType="btree">
+            <column name="admin_user_id"/>
+        </index>
+        <index referenceId="FRODO_ANTIFRAUD_ACTION_LOG_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>

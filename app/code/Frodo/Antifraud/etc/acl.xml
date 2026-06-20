@@ -3,6 +3,10 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
+                <resource id="Frodo_Antifraud::antifraud" title="Frodo Antifraud" sortOrder="50">
+                    <resource id="Frodo_Antifraud::lists" title="Manage Antifraud Lists" sortOrder="10"/>
+                    <resource id="Frodo_Antifraud::action_log" title="View Action Log" sortOrder="20"/>
+                </resource>
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">

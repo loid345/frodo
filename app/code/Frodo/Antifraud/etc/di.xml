@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Grid data source virtual types -->
+    <virtualType name="FrodoAntifraudBlacklistEmailGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="FrodoAntifraudWhitelistEmailGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="FrodoAntifraudBlacklistIpGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="FrodoAntifraudLimitedEmailGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="FrodoAntifraudActionLogGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+
+    <!-- Grid collection factories for data provider -->
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="frodo_antifraud_blacklist_email_listing_data_source" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\BlacklistEmail\Grid\Collection</item>
+                <item name="frodo_antifraud_whitelist_email_listing_data_source" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\WhitelistEmail\Grid\Collection</item>
+                <item name="frodo_antifraud_blacklist_ip_listing_data_source" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\BlacklistIp\Grid\Collection</item>
+                <item name="frodo_antifraud_limited_email_listing_data_source" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\LimitedEmail\Grid\Collection</item>
+                <item name="frodo_antifraud_action_log_listing_data_source" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\ActionLog\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Grid collection virtual types -->
+    <virtualType name="Frodo\Antifraud\Model\ResourceModel\BlacklistEmail\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">frodo_antifraud_blacklist_email</argument>
+            <argument name="resourceModel" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\BlacklistEmail</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="Frodo\Antifraud\Model\ResourceModel\WhitelistEmail\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">frodo_antifraud_whitelist_email</argument>
+            <argument name="resourceModel" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\WhitelistEmail</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="Frodo\Antifraud\Model\ResourceModel\BlacklistIp\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">frodo_antifraud_blacklist_ip</argument>
+            <argument name="resourceModel" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\BlacklistIp</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="Frodo\Antifraud\Model\ResourceModel\LimitedEmail\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">frodo_antifraud_limited_email</argument>
+            <argument name="resourceModel" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\LimitedEmail</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="Frodo\Antifraud\Model\ResourceModel\ActionLog\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">frodo_antifraud_action_log</argument>
+            <argument name="resourceModel" xsi:type="string">Frodo\Antifraud\Model\ResourceModel\ActionLog</argument>
+        </arguments>
+    </virtualType>
+</config>

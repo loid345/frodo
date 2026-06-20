@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="Frodo\Antifraud\Block\Adminhtml\GenericAddForm" name="frodo_antifraud_blacklist_ip_add_form" template="Frodo_Antifraud::add_form.phtml">
+                <arguments>
+                    <argument name="save_url" xsi:type="string">frodo_antifraud/blacklistIp/save</argument>
+                    <argument name="back_url" xsi:type="string">frodo_antifraud/blacklistIp/index</argument>
+                    <argument name="fields" xsi:type="array">
+                        <item name="ip_address" xsi:type="array">
+                            <item name="label" xsi:type="string">IP Address</item>
+                            <item name="type" xsi:type="string">text</item>
+                            <item name="required" xsi:type="boolean">true</item>
+                            <item name="note" xsi:type="string">IPv4, IPv6, or CIDR range (e.g. 192.168.1.0/24)</item>
+                        </item>
+                        <item name="store_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Store ID</item>
+                            <item name="type" xsi:type="string">text</item>
+                            <item name="required" xsi:type="boolean">false</item>
+                            <item name="note" xsi:type="string">0 for all stores</item>
+                        </item>
+                        <item name="reason" xsi:type="array">
+                            <item name="label" xsi:type="string">Reason</item>
+                            <item name="type" xsi:type="string">text</item>
+                            <item name="required" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

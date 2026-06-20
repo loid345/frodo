@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Frodo_Antifraud::antifraud"
+             title="Antifraud"
+             module="Frodo_Antifraud"
+             parent="Magento_Customer::customer"
+             sortOrder="100"
+             resource="Frodo_Antifraud::antifraud"/>
+
+        <add id="Frodo_Antifraud::blacklist_email"
+             title="Email Blacklist"
+             module="Frodo_Antifraud"
+             parent="Frodo_Antifraud::antifraud"
+             sortOrder="10"
+             action="frodo_antifraud/blacklistEmail/index"
+             resource="Frodo_Antifraud::lists"/>
+
+        <add id="Frodo_Antifraud::whitelist_email"
+             title="Email Whitelist"
+             module="Frodo_Antifraud"
+             parent="Frodo_Antifraud::antifraud"
+             sortOrder="20"
+             action="frodo_antifraud/whitelistEmail/index"
+             resource="Frodo_Antifraud::lists"/>
+
+        <add id="Frodo_Antifraud::blacklist_ip"
+             title="IP Blacklist"
+             module="Frodo_Antifraud"
+             parent="Frodo_Antifraud::antifraud"
+             sortOrder="30"
+             action="frodo_antifraud/blacklistIp/index"
+             resource="Frodo_Antifraud::lists"/>
+
+        <add id="Frodo_Antifraud::limited_email"
+             title="Temporary Limits"
+             module="Frodo_Antifraud"
+             parent="Frodo_Antifraud::antifraud"
+             sortOrder="40"
+             action="frodo_antifraud/limitedEmail/index"
+             resource="Frodo_Antifraud::lists"/>
+
+        <add id="Frodo_Antifraud::action_log"
+             title="Action Log"
+             module="Frodo_Antifraud"
+             parent="Frodo_Antifraud::antifraud"
+             sortOrder="50"
+             action="frodo_antifraud/actionLog/index"
+             resource="Frodo_Antifraud::action_log"/>
+    </menu>
+</config>

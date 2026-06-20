@@ -1,0 +1,78 @@
+{
+    "frodo_antifraud_blacklist_email": {
+        "column": {
+            "entity_id": true,
+            "email": true,
+            "reason": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FRODO_ANTIFRAUD_BLACKLIST_EMAIL_EMAIL": true
+        }
+    },
+    "frodo_antifraud_whitelist_email": {
+        "column": {
+            "entity_id": true,
+            "email": true,
+            "reason": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FRODO_ANTIFRAUD_WHITELIST_EMAIL_EMAIL": true
+        }
+    },
+    "frodo_antifraud_blacklist_ip": {
+        "column": {
+            "entity_id": true,
+            "ip_address": true,
+            "store_id": true,
+            "reason": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FRODO_ANTIFRAUD_BLACKLIST_IP_IP_STORE": true,
+            "FRODO_ANTIFRAUD_BLACKLIST_IP_STORE_ID": true
+        }
+    },
+    "frodo_antifraud_limited_email": {
+        "column": {
+            "entity_id": true,
+            "email": true,
+            "expires_at": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FRODO_ANTIFRAUD_LIMITED_EMAIL_EMAIL": true
+        }
+    },
+    "frodo_antifraud_action_log": {
+        "column": {
+            "entity_id": true,
+            "action_type": true,
+            "target_type": true,
+            "target_value": true,
+            "admin_user_id": true,
+            "customer_id": true,
+            "details": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        },
+        "index": {
+            "FRODO_ANTIFRAUD_ACTION_LOG_ACTION_TYPE": true,
+            "FRODO_ANTIFRAUD_ACTION_LOG_TARGET_VALUE": true,
+            "FRODO_ANTIFRAUD_ACTION_LOG_CUSTOMER_ID": true,
+            "FRODO_ANTIFRAUD_ACTION_LOG_ADMIN_USER_ID": true,
+            "FRODO_ANTIFRAUD_ACTION_LOG_CREATED_AT": true
+        }
+    }
+}

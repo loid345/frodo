@@ -9,6 +9,7 @@ namespace Frodo\Antifraud\Model;
 use DateTimeZone;
 use Frodo\Antifraud\Helper\Config;
 use Magento\Framework\DB\Select;
+use Magento\Framework\DB\Sql\Expression;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
 use Magento\Framework\Phrase;
@@ -18,7 +19,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\DB\Sql\Expression;
 
 class OrderLimitValidator
 {
@@ -30,9 +30,24 @@ class OrderLimitValidator
     private Config $config;
 
     /**
-     * @var EmailList
+     * @var BlacklistEmailRepository
      */
-    private EmailList $emailList;
+    private BlacklistEmailRepository $blacklistEmailRepo;
+
+    /**
+     * @var WhitelistEmailRepository
+     */
+    private WhitelistEmailRepository $whitelistEmailRepo;
+
+    /**
+     * @var LimitedEmailRepository
+     */
+    private LimitedEmailRepository $limitedEmailRepo;
+
+    /**
+     * @var BlacklistIpRepository
+     */
+    private BlacklistIpRepository $blacklistIpRepo;
 
     /**
      * @var IpMatcher
@@ -60,32 +75,49 @@ class OrderLimitValidator
     private TimezoneInterface $timezone;
 
     /**
+     * @var ActionLogger
+     */
+    private ActionLogger $actionLogger;
+
+    /**
      * Initialize validator dependencies.
      *
      * @param Config $config
-     * @param EmailList $emailList
+     * @param BlacklistEmailRepository $blacklistEmailRepo
+     * @param WhitelistEmailRepository $whitelistEmailRepo
+     * @param LimitedEmailRepository $limitedEmailRepo
+     * @param BlacklistIpRepository $blacklistIpRepo
      * @param IpMatcher $ipMatcher
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param RemoteAddress $remoteAddress
      * @param StoreManagerInterface $storeManager
      * @param TimezoneInterface $timezone
+     * @param ActionLogger $actionLogger
      */
     public function __construct(
         Config $config,
-        EmailList $emailList,
+        BlacklistEmailRepository $blacklistEmailRepo,
+        WhitelistEmailRepository $whitelistEmailRepo,
+        LimitedEmailRepository $limitedEmailRepo,
+        BlacklistIpRepository $blacklistIpRepo,
         IpMatcher $ipMatcher,
         OrderCollectionFactory $orderCollectionFactory,
         RemoteAddress $remoteAddress,
         StoreManagerInterface $storeManager,
-        TimezoneInterface $timezone
+        TimezoneInterface $timezone,
+        ActionLogger $actionLogger
     ) {
         $this->config = $config;
-        $this->emailList = $emailList;
+        $this->blacklistEmailRepo = $blacklistEmailRepo;
+        $this->whitelistEmailRepo = $whitelistEmailRepo;
+        $this->limitedEmailRepo = $limitedEmailRepo;
+        $this->blacklistIpRepo = $blacklistIpRepo;
         $this->ipMatcher = $ipMatcher;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->remoteAddress = $remoteAddress;
         $this->storeManager = $storeManager;
         $this->timezone = $timezone;
+        $this->actionLogger = $actionLogger;
     }
 
     /**
@@ -104,22 +136,26 @@ class OrderLimitValidator
         }
 
         $email = $this->normalizeEmail((string)($order->getCustomerEmail() ?: $quote->getCustomerEmail()));
-        $isWhitelisted = $this->emailList->contains($email, $this->config->getWhitelistEmails());
 
-        if ($this->emailList->contains($email, $this->config->getBlacklistEmails())) {
+        if ($this->blacklistEmailRepo->emailExists($email)) {
+            $this->actionLogger->log('order_blocked', 'email', $email, null, 'Email is blacklisted');
             throw new LocalizedException(__('Order placement is blocked.'));
         }
 
         $remoteIp = $this->getRemoteIp($quote);
-        if ($this->ipMatcher->contains($remoteIp, $this->config->getBlacklistIps($storeId))) {
+        $storeIds = $this->getWebsiteStoreIds($storeId);
+        if ($remoteIp !== '' && $this->isIpBlocked($remoteIp, $storeIds)) {
+            $this->actionLogger->log('order_blocked', 'ip', $remoteIp, null, 'IP is blacklisted');
             throw new LocalizedException(__('Order placement is not available from this IP address.'));
         }
 
+        $isWhitelisted = $this->whitelistEmailRepo->emailExists($email);
         if ($isWhitelisted || $email === '') {
             return;
         }
 
-        if ($email !== '' && in_array($email, $this->config->getLimitedEmails(), true)) {
+        if ($this->limitedEmailRepo->isActiveLimited($email)) {
+            $this->actionLogger->log('order_blocked', 'email', $email, null, 'Email has active daily limit');
             throw new LocalizedException($this->getLimitMessage());
         }
 
@@ -133,12 +169,51 @@ class OrderLimitValidator
         $currentOrderAmount = (float)$order->getBaseGrandTotal();
 
         if ($countLimit > 0 && ((int)$dailyTotals['orders_count'] + 1) > $countLimit) {
+            $this->actionLogger->log(
+                'order_blocked',
+                'email',
+                $email,
+                null,
+                sprintf('Daily order count limit exceeded (%d/%d)', (int)$dailyTotals['orders_count'] + 1, $countLimit)
+            );
             throw new LocalizedException($this->getLimitMessage());
         }
 
         if ($amountLimit > 0.0 && ((float)$dailyTotals['base_amount_total'] + $currentOrderAmount) > $amountLimit) {
+            $this->actionLogger->log(
+                'order_blocked',
+                'email',
+                $email,
+                null,
+                sprintf(
+                    'Daily amount limit exceeded (%.2f/%.2f)',
+                    (float)$dailyTotals['base_amount_total'] + $currentOrderAmount,
+                    $amountLimit
+                )
+            );
             throw new LocalizedException($this->getLimitMessage());
         }
+    }
+
+    /**
+     * Check whether the IP is blocked for any of the given store IDs using the IpMatcher.
+     *
+     * IP blacklist entries may contain CIDR ranges, so we still need the IpMatcher
+     * for subnet matching rather than a simple DB lookup.
+     *
+     * @param string $ip
+     * @param int[] $storeIds
+     * @return bool
+     */
+    private function isIpBlocked(string $ip, array $storeIds): bool
+    {
+        $blockedIps = $this->blacklistIpRepo->getByStoreIds($storeIds);
+        $ipAddresses = [];
+        foreach ($blockedIps as $entry) {
+            $ipAddresses[] = $entry->getIpAddress();
+        }
+
+        return $this->ipMatcher->contains($ip, $ipAddresses);
     }
 
     /**
