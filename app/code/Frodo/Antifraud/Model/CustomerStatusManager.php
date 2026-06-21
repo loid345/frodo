@@ -274,8 +274,8 @@ class CustomerStatusManager
         $existingNew = $this->limitedEmailRepo->getByEmail($newEmail);
         if ($existingNew !== null) {
             try {
-                $oldExpires = new DateTimeImmutable($entity->getExpiresAt());
-                $newExpires = new DateTimeImmutable($existingNew->getExpiresAt());
+                $oldExpires = new DateTimeImmutable($entity->getExpiresAt(), new DateTimeZone(self::UTC_TIMEZONE));
+                $newExpires = new DateTimeImmutable($existingNew->getExpiresAt(), new DateTimeZone(self::UTC_TIMEZONE));
                 if ($newExpires > $oldExpires) {
                     $this->limitedEmailRepo->delete($entity);
                     return;

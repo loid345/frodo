@@ -144,7 +144,8 @@ class OrderLimitValidator
 
         $remoteIp = $this->getRemoteIp($quote);
         $storeIds = $this->getWebsiteStoreIds($storeId);
-        if ($remoteIp !== '' && $this->isIpBlocked($remoteIp, $storeIds)) {
+        $storeIdsWithGlobal = array_merge([0], $storeIds);
+        if ($remoteIp !== '' && $this->isIpBlocked($remoteIp, $storeIdsWithGlobal)) {
             $this->actionLogger->log('order_blocked', 'ip', $remoteIp, null, 'IP is blacklisted');
             throw new LocalizedException(__('Order placement is not available from this IP address.'));
         }

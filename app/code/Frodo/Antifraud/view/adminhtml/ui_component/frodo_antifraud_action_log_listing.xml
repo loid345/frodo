@@ -58,7 +58,11 @@
             <settings><filter>text</filter><label translate="true">Admin User ID</label></settings>
         </column>
         <column name="customer_id" class="Frodo\Antifraud\Ui\Component\Listing\Column\CustomerLink" sortOrder="70">
-            <settings><filter>text</filter><label translate="true">Customer</label></settings>
+            <settings>
+                <filter>text</filter>
+                <bodyTmpl>ui/grid/cells/html</bodyTmpl>
+                <label translate="true">Customer</label>
+            </settings>
         </column>
         <column name="details" sortOrder="80">
             <settings><label translate="true">Details</label></settings>

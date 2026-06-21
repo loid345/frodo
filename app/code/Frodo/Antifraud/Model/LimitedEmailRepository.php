@@ -116,7 +116,7 @@ class LimitedEmailRepository
         }
 
         try {
-            $expiresAt = new DateTimeImmutable($entity->getExpiresAt());
+            $expiresAt = new DateTimeImmutable($entity->getExpiresAt(), new DateTimeZone(self::UTC_TIMEZONE));
             $now = new DateTimeImmutable('now', new DateTimeZone(self::UTC_TIMEZONE));
 
             return $expiresAt > $now;

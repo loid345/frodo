@@ -55,19 +55,16 @@ class CustomerLink extends Column
         foreach ($dataSource['data']['items'] as &$item) {
             $customerId = $item['customer_id'] ?? null;
             if ($customerId === null || (int)$customerId <= 0) {
-                $item[$fieldName . '_html'] = '';
-                $item[$fieldName . '_label'] = __('N/A');
+                $item[$fieldName] = (string)__('N/A');
                 continue;
             }
 
             $url = $this->urlBuilder->getUrl('customer/index/edit', ['id' => (int)$customerId]);
-            $item[$fieldName . '_html'] = sprintf(
+            $item[$fieldName] = sprintf(
                 '<a href="%s" target="_blank">Customer #%d</a>',
                 $url,
                 (int)$customerId
             );
-            $item[$fieldName . '_label'] = sprintf('Customer #%d', (int)$customerId);
-            $item[$fieldName . '_url'] = $url;
         }
 
         return $dataSource;
