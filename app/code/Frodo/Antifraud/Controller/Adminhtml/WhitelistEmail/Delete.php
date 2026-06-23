@@ -37,8 +37,7 @@ class Delete extends Action implements HttpGetActionInterface
         Action\Context $context,
         WhitelistEmailRepository $repository,
         ActionLogger $actionLogger
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->repository = $repository;
         $this->actionLogger = $actionLogger;
