@@ -13,7 +13,7 @@ use Magento\Framework\View\Result\PageFactory;
 
 class Index extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::action_log';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::action_log';
 
     /**
      * @var PageFactory

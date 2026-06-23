@@ -14,7 +14,7 @@ use Magento\Framework\Controller\Result\Redirect;
 
 class Delete extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
     private WhitelistEmailRepository $repository;
     private ActionLogger $actionLogger;
 

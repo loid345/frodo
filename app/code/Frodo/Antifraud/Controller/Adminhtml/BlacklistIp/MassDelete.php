@@ -16,7 +16,7 @@ use Magento\Ui\Component\MassAction\Filter;
 
 class MassDelete extends Action implements HttpPostActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
     private Filter $filter;
     private CollectionFactory $collectionFactory;
     private BlacklistIpRepository $repository;

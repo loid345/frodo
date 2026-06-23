@@ -13,7 +13,7 @@ use Magento\Framework\View\Result\PageFactory;
 
 class NewAction extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
     private PageFactory $pageFactory;
 
     /**

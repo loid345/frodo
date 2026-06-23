@@ -15,7 +15,7 @@ use Magento\Framework\Controller\Result\Redirect;
 
 class Save extends Action implements HttpPostActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
     private BlacklistIpRepository $repository;
     private ActionLogger $actionLogger;
 

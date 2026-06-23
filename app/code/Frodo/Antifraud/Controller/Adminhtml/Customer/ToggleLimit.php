@@ -17,7 +17,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 
 class ToggleLimit extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::config';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::config';
 
     /**
      * @var CustomerRepositoryInterface
