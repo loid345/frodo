@@ -36,23 +36,47 @@ class CustomerStatusManager
     private ActionLogger $actionLogger;
 
     /**
+     * @var BlacklistEmailFactory
+     */
+    private BlacklistEmailFactory $blacklistEmailFactory;
+
+    /**
+     * @var WhitelistEmailFactory
+     */
+    private WhitelistEmailFactory $whitelistEmailFactory;
+
+    /**
+     * @var LimitedEmailFactory
+     */
+    private LimitedEmailFactory $limitedEmailFactory;
+
+    /**
      * Initialize customer status dependencies.
      *
      * @param BlacklistEmailRepository $blacklistEmailRepo
      * @param WhitelistEmailRepository $whitelistEmailRepo
      * @param LimitedEmailRepository $limitedEmailRepo
      * @param ActionLogger $actionLogger
+     * @param BlacklistEmailFactory $blacklistEmailFactory
+     * @param WhitelistEmailFactory $whitelistEmailFactory
+     * @param LimitedEmailFactory $limitedEmailFactory
      */
     public function __construct(
         BlacklistEmailRepository $blacklistEmailRepo,
         WhitelistEmailRepository $whitelistEmailRepo,
         LimitedEmailRepository $limitedEmailRepo,
-        ActionLogger $actionLogger
+        ActionLogger $actionLogger,
+        BlacklistEmailFactory $blacklistEmailFactory,
+        WhitelistEmailFactory $whitelistEmailFactory,
+        LimitedEmailFactory $limitedEmailFactory
     ) {
         $this->blacklistEmailRepo = $blacklistEmailRepo;
         $this->whitelistEmailRepo = $whitelistEmailRepo;
         $this->limitedEmailRepo = $limitedEmailRepo;
         $this->actionLogger = $actionLogger;
+        $this->blacklistEmailFactory = $blacklistEmailFactory;
+        $this->whitelistEmailFactory = $whitelistEmailFactory;
+        $this->limitedEmailFactory = $limitedEmailFactory;
     }
 
     /**
@@ -85,7 +109,7 @@ class CustomerStatusManager
             return;
         }
 
-        $entity = new BlacklistEmail();
+        $entity = $this->blacklistEmailFactory->create();
         $entity->setEmail($email);
         $entity->setReason('Blocked via admin customer page');
         $this->blacklistEmailRepo->save($entity);
@@ -155,7 +179,7 @@ class CustomerStatusManager
 
         $entity = $this->limitedEmailRepo->getByEmail($email);
         if ($entity === null) {
-            $entity = new LimitedEmail();
+            $entity = $this->limitedEmailFactory->create();
             $entity->setEmail($email);
         }
         $entity->setExpiresAt($expiresAt);
@@ -189,7 +213,7 @@ class CustomerStatusManager
         $this->actionLogger->log('limit_remove', 'email', $email, $customerId, 'Limit removed via admin');
 
         if (!$this->whitelistEmailRepo->emailExists($email)) {
-            $entity = new WhitelistEmail();
+            $entity = $this->whitelistEmailFactory->create();
             $entity->setEmail($email);
             $entity->setReason('Auto-whitelisted on limit removal');
             $this->whitelistEmailRepo->save($entity);

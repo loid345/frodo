@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace Frodo\Antifraud\Controller\Adminhtml\WhitelistEmail;
 
 use Frodo\Antifraud\Model\ActionLogger;
-use Frodo\Antifraud\Model\WhitelistEmail;
+use Frodo\Antifraud\Model\WhitelistEmailFactory;
 use Frodo\Antifraud\Model\WhitelistEmailRepository;
 use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
@@ -18,17 +18,24 @@ class Save extends Action implements HttpPostActionInterface
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
     private WhitelistEmailRepository $repository;
     private ActionLogger $actionLogger;
+    private WhitelistEmailFactory $entityFactory;
 
     /**
      * @param Action\Context $context
      * @param WhitelistEmailRepository $repository
      * @param ActionLogger $actionLogger
+     * @param WhitelistEmailFactory $entityFactory
      */
-    public function __construct(Action\Context $context, WhitelistEmailRepository $repository, ActionLogger $actionLogger)
-    {
+    public function __construct(
+        Action\Context $context,
+        WhitelistEmailRepository $repository,
+        ActionLogger $actionLogger,
+        WhitelistEmailFactory $entityFactory
+    ) {
         parent::__construct($context);
         $this->repository = $repository;
         $this->actionLogger = $actionLogger;
+        $this->entityFactory = $entityFactory;
     }
 
     /**
@@ -45,7 +52,7 @@ class Save extends Action implements HttpPostActionInterface
         $email = strtolower(trim($data['email']));
         try {
             $entityId = isset($data['entity_id']) ? (int)$data['entity_id'] : 0;
-            $entity = $entityId > 0 ? $this->repository->getById($entityId) : new WhitelistEmail();
+            $entity = $entityId > 0 ? $this->repository->getById($entityId) : $this->entityFactory->create();
             $entity->setEmail($email);
             $entity->setReason($data['reason'] ?? null);
             $this->repository->save($entity);
