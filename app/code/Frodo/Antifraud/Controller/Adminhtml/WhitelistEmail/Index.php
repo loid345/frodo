@@ -13,14 +13,25 @@ use Magento\Framework\View\Result\PageFactory;
 
 class Index extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
 
+    /**
+     * @var PageFactory
+     */
     /**
      * @var PageFactory
      */
     private PageFactory $pageFactory;
 
     /**
+     * Initialize controller dependencies.
+     *
+     * @param Action\Context $context
+     * @param PageFactory $pageFactory
+     */
+    /**
+     * Initialize controller dependencies.
+     *
      * @param Action\Context $context
      * @param PageFactory $pageFactory
      */
@@ -31,6 +42,8 @@ class Index extends Action implements HttpGetActionInterface
     }
 
     /**
+     * Render the admin page.
+     *
      * @return Page
      */
     public function execute(): Page

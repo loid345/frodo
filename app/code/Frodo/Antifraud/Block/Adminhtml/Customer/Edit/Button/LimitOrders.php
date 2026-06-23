@@ -17,7 +17,7 @@ use Magento\Framework\View\Element\UiComponent\Control\ButtonProviderInterface;
 
 class LimitOrders implements ButtonProviderInterface
 {
-    private const ADMIN_RESOURCE = 'Frodo_Antifraud::config';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::config';
 
     /**
      * @var RequestInterface

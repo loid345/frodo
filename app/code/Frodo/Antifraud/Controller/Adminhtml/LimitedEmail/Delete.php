@@ -14,17 +14,40 @@ use Magento\Framework\Controller\Result\Redirect;
 
 class Delete extends Action implements HttpGetActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var LimitedEmailRepository
+     */
     private LimitedEmailRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
 
-    public function __construct(Action\Context $context, LimitedEmailRepository $repository, ActionLogger $actionLogger)
-    {
+    /**
+     * Initialize controller dependencies.
+     *
+     * @param Action\Context $context
+     * @param LimitedEmailRepository $repository
+     * @param ActionLogger $actionLogger
+     */
+    public function __construct(
+        Action\Context $context,
+        LimitedEmailRepository $repository,
+        ActionLogger $actionLogger
+    ) {
         parent::__construct($context);
         $this->repository = $repository;
         $this->actionLogger = $actionLogger;
     }
 
+    /**
+     * Process the admin action.
+     *
+     * @return Redirect
+     */
     public function execute(): Redirect
     {
         $redirect = $this->resultRedirectFactory->create();

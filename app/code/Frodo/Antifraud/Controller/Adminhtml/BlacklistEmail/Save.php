@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace Frodo\Antifraud\Controller\Adminhtml\BlacklistEmail;
 
 use Frodo\Antifraud\Model\ActionLogger;
-use Frodo\Antifraud\Model\BlacklistEmail;
+use Frodo\Antifraud\Model\BlacklistEmailFactory;
 use Frodo\Antifraud\Model\BlacklistEmailRepository;
 use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
@@ -15,7 +15,7 @@ use Magento\Framework\Controller\Result\Redirect;
 
 class Save extends Action implements HttpPostActionInterface
 {
-    protected const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+    public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
 
     /**
      * @var BlacklistEmailRepository
@@ -28,20 +28,28 @@ class Save extends Action implements HttpPostActionInterface
     private ActionLogger $actionLogger;
 
     /**
+     * @var BlacklistEmailFactory
+     */
+    private BlacklistEmailFactory $entityFactory;
+
+    /**
      * Initialize controller dependencies.
      *
      * @param Action\Context $context
      * @param BlacklistEmailRepository $repository
      * @param ActionLogger $actionLogger
+     * @param BlacklistEmailFactory $entityFactory
      */
     public function __construct(
         Action\Context $context,
         BlacklistEmailRepository $repository,
-        ActionLogger $actionLogger
+        ActionLogger $actionLogger,
+        BlacklistEmailFactory $entityFactory
     ) {
         parent::__construct($context);
         $this->repository = $repository;
         $this->actionLogger = $actionLogger;
+        $this->entityFactory = $entityFactory;
     }
 
     /**
@@ -66,7 +74,7 @@ class Save extends Action implements HttpPostActionInterface
             if ($entityId > 0) {
                 $entity = $this->repository->getById($entityId);
             } else {
-                $entity = new BlacklistEmail();
+                $entity = $this->entityFactory->create();
             }
 
             $entity->setEmail($email);
