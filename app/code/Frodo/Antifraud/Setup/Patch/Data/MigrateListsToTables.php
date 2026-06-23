@@ -108,8 +108,13 @@ class MigrateListsToTables implements DataPatchInterface
      * @param string $now
      * @return void
      */
-    private function migrateEmailList($connection, string $configTable, string $configPath, string $targetTable, string $now): void
-    {
+    private function migrateEmailList(
+        $connection,
+        string $configTable,
+        string $configPath,
+        string $targetTable,
+        string $now
+    ): void {
         $rows = $connection->fetchAll(
             $connection->select()->from($configTable, ['value'])->where('path = ?', $configPath)
         );

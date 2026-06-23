@@ -16,10 +16,30 @@ use Magento\Framework\Controller\Result\Redirect;
 class Save extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var BlacklistIpRepository
+     */
     private BlacklistIpRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
+
+    /**
+     * @var BlacklistIpFactory
+     */
     private BlacklistIpFactory $entityFactory;
 
+    /**
+     * Initialize controller dependencies.
+     *
+     * @param Action\Context $context
+     * @param BlacklistIpRepository $repository
+     * @param ActionLogger $actionLogger
+     * @param BlacklistIpFactory $entityFactory
+     */
     public function __construct(
         Action\Context $context,
         BlacklistIpRepository $repository,
@@ -32,6 +52,11 @@ class Save extends Action implements HttpPostActionInterface
         $this->entityFactory = $entityFactory;
     }
 
+    /**
+     * Process the admin action.
+     *
+     * @return Redirect
+     */
     public function execute(): Redirect
     {
         $redirect = $this->resultRedirectFactory->create();
@@ -42,12 +67,20 @@ class Save extends Action implements HttpPostActionInterface
         }
         try {
             $entityId = isset($data['entity_id']) ? (int)$data['entity_id'] : 0;
-            $entity = $entityId > 0 ? $this->repository->getById($entityId) : $this->entityFactory->create();
+            $entity = $entityId > 0
+                ? $this->repository->getById($entityId)
+                : $this->entityFactory->create();
             $entity->setIpAddress(trim($data['ip_address']));
             $entity->setStoreId((int)($data['store_id'] ?? 0));
             $entity->setReason($data['reason'] ?? null);
             $this->repository->save($entity);
-            $this->actionLogger->log('ip_blacklist_add', 'ip', trim($data['ip_address']), null, $data['reason'] ?? null);
+            $this->actionLogger->log(
+                'ip_blacklist_add',
+                'ip',
+                trim($data['ip_address']),
+                null,
+                $data['reason'] ?? null
+            );
             $this->messageManager->addSuccessMessage(__('The IP address has been saved.'));
         } catch (\Exception $exception) {
             $this->messageManager->addErrorMessage($exception->getMessage());

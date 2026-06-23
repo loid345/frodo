@@ -17,20 +17,43 @@ use Magento\Ui\Component\MassAction\Filter;
 class MassDelete extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var Filter
+     */
     private Filter $filter;
+
+    /**
+     * @var CollectionFactory
+     */
     private CollectionFactory $collectionFactory;
+
+    /**
+     * @var WhitelistEmailRepository
+     */
     private WhitelistEmailRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
 
     /**
+     * Initialize controller dependencies.
+     *
      * @param Action\Context $context
      * @param Filter $filter
      * @param CollectionFactory $collectionFactory
      * @param WhitelistEmailRepository $repository
      * @param ActionLogger $actionLogger
      */
-    public function __construct(Action\Context $context, Filter $filter, CollectionFactory $collectionFactory, WhitelistEmailRepository $repository, ActionLogger $actionLogger)
-    {
+    public function __construct(
+        Action\Context $context,
+        Filter $filter,
+        CollectionFactory $collectionFactory,
+        WhitelistEmailRepository $repository,
+        ActionLogger $actionLogger
+    ) {
         parent::__construct($context);
         $this->filter = $filter;
         $this->collectionFactory = $collectionFactory;
@@ -39,6 +62,8 @@ class MassDelete extends Action implements HttpPostActionInterface
     }
 
     /**
+     * Process the admin action.
+     *
      * @return Redirect
      */
     public function execute(): Redirect
@@ -48,7 +73,13 @@ class MassDelete extends Action implements HttpPostActionInterface
             $collection = $this->filter->getCollection($this->collectionFactory->create());
             $count = 0;
             foreach ($collection as $entity) {
-                $this->actionLogger->log('whitelist_remove', 'email', $entity->getEmail(), null, 'Mass delete');
+                $this->actionLogger->log(
+                    'whitelist_remove',
+                    'email',
+                    $entity->getEmail(),
+                    null,
+                    'Mass delete'
+                );
                 $this->repository->delete($entity);
                 $count++;
             }

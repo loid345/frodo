@@ -3,25 +3,26 @@
  * Copyright © Frodo. All rights reserved.
  *
  * @var \Frodo\Antifraud\Block\Adminhtml\GenericAddForm $block
+ * @var \Magento\Framework\Escaper $escaper
  */
 ?>
-<form action="<?= $block->escapeUrl($block->getSaveUrl()) ?>" method="post" id="frodo_antifraud_add_form">
+<form action="<?= $escaper->escapeUrl($block->getSaveUrl()) ?>" method="post" id="frodo_antifraud_add_form">
     <?= $block->getBlockHtml('formkey') ?>
     <fieldset class="admin__fieldset">
         <?php foreach ($block->getFields() as $fieldName => $fieldConfig): ?>
             <div class="admin__field<?= !empty($fieldConfig['required']) ? ' _required' : '' ?>">
-                <label class="admin__field-label" for="<?= $block->escapeHtmlAttr($fieldName) ?>">
-                    <span><?= $block->escapeHtml(__($fieldConfig['label'] ?? $fieldName)) ?></span>
+                <label class="admin__field-label" for="<?= $escaper->escapeHtmlAttr($fieldName) ?>">
+                    <span><?= $escaper->escapeHtml(__($fieldConfig['label'] ?? $fieldName)) ?></span>
                 </label>
                 <div class="admin__field-control">
-                    <input type="<?= $block->escapeHtmlAttr($fieldConfig['type'] ?? 'text') ?>"
-                           name="<?= $block->escapeHtmlAttr($fieldName) ?>"
-                           id="<?= $block->escapeHtmlAttr($fieldName) ?>"
+                    <input type="<?= $escaper->escapeHtmlAttr($fieldConfig['type'] ?? 'text') ?>"
+                           name="<?= $escaper->escapeHtmlAttr($fieldName) ?>"
+                           id="<?= $escaper->escapeHtmlAttr($fieldName) ?>"
                            class="admin__control-text"
                            <?= !empty($fieldConfig['required']) ? 'required' : '' ?>/>
                     <?php if (!empty($fieldConfig['note'])): ?>
                         <div class="admin__field-note">
-                            <span><?= $block->escapeHtml(__($fieldConfig['note'])) ?></span>
+                            <span><?= $escaper->escapeHtml(__($fieldConfig['note'])) ?></span>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -29,11 +30,13 @@
         <?php endforeach; ?>
     </fieldset>
     <div class="admin__page-actions">
-        <button type="button" class="action-default scalable back" onclick="location.href='<?= $block->escapeUrl($block->getBackUrl()) ?>'">
-            <span><?= $block->escapeHtml(__('Back')) ?></span>
+        <button type="button"
+                class="action-default scalable back"
+                onclick="location.href='<?= $escaper->escapeUrl($block->getBackUrl()) ?>'">
+            <span><?= $escaper->escapeHtml(__('Back')) ?></span>
         </button>
         <button type="submit" class="action-default scalable save primary">
-            <span><?= $block->escapeHtml(__('Save')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Save')) ?></span>
         </button>
     </div>
 </form>

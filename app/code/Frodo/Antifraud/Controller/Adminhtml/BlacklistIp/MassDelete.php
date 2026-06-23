@@ -17,13 +17,43 @@ use Magento\Ui\Component\MassAction\Filter;
 class MassDelete extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var Filter
+     */
     private Filter $filter;
+
+    /**
+     * @var CollectionFactory
+     */
     private CollectionFactory $collectionFactory;
+
+    /**
+     * @var BlacklistIpRepository
+     */
     private BlacklistIpRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
 
-    public function __construct(Action\Context $context, Filter $filter, CollectionFactory $collectionFactory, BlacklistIpRepository $repository, ActionLogger $actionLogger)
-    {
+    /**
+     * Initialize controller dependencies.
+     *
+     * @param Action\Context $context
+     * @param Filter $filter
+     * @param CollectionFactory $collectionFactory
+     * @param BlacklistIpRepository $repository
+     * @param ActionLogger $actionLogger
+     */
+    public function __construct(
+        Action\Context $context,
+        Filter $filter,
+        CollectionFactory $collectionFactory,
+        BlacklistIpRepository $repository,
+        ActionLogger $actionLogger
+    ) {
         parent::__construct($context);
         $this->filter = $filter;
         $this->collectionFactory = $collectionFactory;
@@ -31,6 +61,11 @@ class MassDelete extends Action implements HttpPostActionInterface
         $this->actionLogger = $actionLogger;
     }
 
+    /**
+     * Process the admin action.
+     *
+     * @return Redirect
+     */
     public function execute(): Redirect
     {
         $redirect = $this->resultRedirectFactory->create();
@@ -38,7 +73,13 @@ class MassDelete extends Action implements HttpPostActionInterface
             $collection = $this->filter->getCollection($this->collectionFactory->create());
             $count = 0;
             foreach ($collection as $entity) {
-                $this->actionLogger->log('ip_blacklist_remove', 'ip', $entity->getIpAddress(), null, 'Mass delete');
+                $this->actionLogger->log(
+                    'ip_blacklist_remove',
+                    'ip',
+                    $entity->getIpAddress(),
+                    null,
+                    'Mass delete'
+                );
                 $this->repository->delete($entity);
                 $count++;
             }

@@ -16,11 +16,25 @@ use Magento\Framework\Controller\Result\Redirect;
 class Save extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var WhitelistEmailRepository
+     */
     private WhitelistEmailRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
+
+    /**
+     * @var WhitelistEmailFactory
+     */
     private WhitelistEmailFactory $entityFactory;
 
     /**
+     * Initialize controller dependencies.
+     *
      * @param Action\Context $context
      * @param WhitelistEmailRepository $repository
      * @param ActionLogger $actionLogger
@@ -39,6 +53,8 @@ class Save extends Action implements HttpPostActionInterface
     }
 
     /**
+     * Process the admin action.
+     *
      * @return Redirect
      */
     public function execute(): Redirect
@@ -52,11 +68,19 @@ class Save extends Action implements HttpPostActionInterface
         $email = strtolower(trim($data['email']));
         try {
             $entityId = isset($data['entity_id']) ? (int)$data['entity_id'] : 0;
-            $entity = $entityId > 0 ? $this->repository->getById($entityId) : $this->entityFactory->create();
+            $entity = $entityId > 0
+                ? $this->repository->getById($entityId)
+                : $this->entityFactory->create();
             $entity->setEmail($email);
             $entity->setReason($data['reason'] ?? null);
             $this->repository->save($entity);
-            $this->actionLogger->log('whitelist_add', 'email', $email, null, $data['reason'] ?? null);
+            $this->actionLogger->log(
+                'whitelist_add',
+                'email',
+                $email,
+                null,
+                $data['reason'] ?? null
+            );
             $this->messageManager->addSuccessMessage(__('The email has been saved.'));
         } catch (\Exception $exception) {
             $this->messageManager->addErrorMessage($exception->getMessage());

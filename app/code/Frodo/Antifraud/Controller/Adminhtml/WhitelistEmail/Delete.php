@@ -15,15 +15,29 @@ use Magento\Framework\Controller\Result\Redirect;
 class Delete extends Action implements HttpGetActionInterface
 {
     public const ADMIN_RESOURCE = 'Frodo_Antifraud::lists';
+
+    /**
+     * @var WhitelistEmailRepository
+     */
     private WhitelistEmailRepository $repository;
+
+    /**
+     * @var ActionLogger
+     */
     private ActionLogger $actionLogger;
 
     /**
+     * Initialize controller dependencies.
+     *
      * @param Action\Context $context
      * @param WhitelistEmailRepository $repository
      * @param ActionLogger $actionLogger
      */
-    public function __construct(Action\Context $context, WhitelistEmailRepository $repository, ActionLogger $actionLogger)
+    public function __construct(
+        Action\Context $context,
+        WhitelistEmailRepository $repository,
+        ActionLogger $actionLogger
+    )
     {
         parent::__construct($context);
         $this->repository = $repository;
@@ -31,6 +45,8 @@ class Delete extends Action implements HttpGetActionInterface
     }
 
     /**
+     * Process the admin action.
+     *
      * @return Redirect
      */
     public function execute(): Redirect
