@@ -7,6 +7,12 @@
                 <daily_order_count_limit>0</daily_order_count_limit>
                 <daily_amount_limit>0</daily_amount_limit>
             </general>
+            <notifications>
+                <notification_enabled>0</notification_enabled>
+                <notification_emails/>
+                <notify_only_mode>0</notify_only_mode>
+                <notification_cooldown>10</notification_cooldown>
+            </notifications>
         </frodo_antifraud>
     </default>
 </config>

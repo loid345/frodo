@@ -1,0 +1,83 @@
+<!--
+/**
+ * Copyright © Frodo. All rights reserved.
+ */
+-->
+<!--@subject Antifraud: {{var violation_type}} — {{var customer_email}} @-->
+<!--@vars
+{"var violation_type":"Violation Type","var customer_email":"Customer Email","var current_value":"Current Value","var limit_value":"Limit Value","var store_name":"Store Name","var remote_ip":"Customer IP Address","var is_blocked":"Order Blocked"}
+@-->
+
+{{template config_path="design/email/header_template"}}
+
+<table>
+    <tr class="email-intro">
+        <td>
+            <h1 style="font-size:18px; font-weight:bold; margin:0 0 10px;">
+                {{trans "Antifraud Limit Violation"}}
+            </h1>
+            <p style="font-size:14px; margin:0 0 10px;">
+                {{trans "A daily limit violation has been detected on store <strong>%store_name</strong>." store_name=$store_name}}
+            </p>
+        </td>
+    </tr>
+    <tr class="email-information">
+        <td>
+            <table cellpadding="6" cellspacing="0" style="border:1px solid #ccc; border-collapse:collapse; width:100%; margin-bottom:15px;">
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5; width:40%;">
+                        {{trans "Violation Type"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var violation_type}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5;">
+                        {{trans "Customer Email"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var customer_email}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5;">
+                        {{trans "Customer IP Address"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var remote_ip}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5;">
+                        {{trans "Current Value"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var current_value}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5;">
+                        {{trans "Limit"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var limit_value}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ccc; font-weight:bold; background:#f5f5f5;">
+                        {{trans "Order Blocked"}}
+                    </td>
+                    <td style="border:1px solid #ccc;">
+                        {{var is_blocked}}
+                    </td>
+                </tr>
+            </table>
+            <p style="font-size:13px; color:#666; margin:0;">
+                {{trans "Please review this customer in the admin panel and decide whether to add them to the blacklist or whitelist."}}
+            </p>
+        </td>
+    </tr>
+</table>
+
+{{template config_path="design/email/footer_template"}}

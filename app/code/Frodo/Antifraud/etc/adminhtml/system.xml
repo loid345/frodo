@@ -26,6 +26,37 @@
                     <comment>Maximum total order amount per email per store day. The value is compared with order base totals, so configure it in the website base currency. Set 0 for no restrictions.</comment>
                 </field>
             </group>
+            <group id="notifications" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Notifications</label>
+                <field id="notification_enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Notifications</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Send email notifications when daily limits are exceeded.</comment>
+                </field>
+                <field id="notification_emails" translate="label comment" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Notification Email Addresses</label>
+                    <comment>Comma-separated list of email addresses to receive limit violation notifications.</comment>
+                    <depends>
+                        <field id="notification_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="notify_only_mode" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Notify Only Mode</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, daily limit violations do not block orders — only notifications are sent. Blacklist and IP blocks still apply.</comment>
+                    <depends>
+                        <field id="notification_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="notification_cooldown" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Notification Cooldown (minutes)</label>
+                    <validate>validate-zero-or-greater validate-digits</validate>
+                    <comment>Minimum interval between notification emails for the same customer email. Set 0 to send on every violation.</comment>
+                    <depends>
+                        <field id="notification_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
         </section>
     </system>
 </config>

@@ -80,6 +80,11 @@ class OrderLimitValidator
     private ActionLogger $actionLogger;
 
     /**
+     * @var NotificationSender
+     */
+    private NotificationSender $notificationSender;
+
+    /**
      * Initialize validator dependencies.
      *
      * @param Config $config
@@ -93,6 +98,7 @@ class OrderLimitValidator
      * @param StoreManagerInterface $storeManager
      * @param TimezoneInterface $timezone
      * @param ActionLogger $actionLogger
+     * @param NotificationSender $notificationSender
      */
     public function __construct(
         Config $config,
@@ -105,7 +111,8 @@ class OrderLimitValidator
         RemoteAddress $remoteAddress,
         StoreManagerInterface $storeManager,
         TimezoneInterface $timezone,
-        ActionLogger $actionLogger
+        ActionLogger $actionLogger,
+        NotificationSender $notificationSender
     ) {
         $this->config = $config;
         $this->blacklistEmailRepo = $blacklistEmailRepo;
@@ -118,6 +125,7 @@ class OrderLimitValidator
         $this->storeManager = $storeManager;
         $this->timezone = $timezone;
         $this->actionLogger = $actionLogger;
+        $this->notificationSender = $notificationSender;
     }
 
     /**
@@ -168,31 +176,59 @@ class OrderLimitValidator
 
         $dailyTotals = $this->getDailyTotals($quote, $email);
         $currentOrderAmount = (float)$order->getBaseGrandTotal();
+        $notifyOnly = $this->config->isNotificationEnabled($storeId)
+            && $this->config->isNotifyOnlyMode($storeId);
 
         if ($countLimit > 0 && ((int)$dailyTotals['orders_count'] + 1) > $countLimit) {
+            $currentCount = (int)$dailyTotals['orders_count'] + 1;
+            $actionType = $notifyOnly ? 'order_limit_notify' : 'order_blocked';
             $this->actionLogger->log(
-                'order_blocked',
+                $actionType,
                 'email',
                 $email,
                 null,
-                sprintf('Daily order count limit exceeded (%d/%d)', (int)$dailyTotals['orders_count'] + 1, $countLimit)
+                sprintf('Daily order count limit exceeded (%d/%d)', $currentCount, $countLimit)
             );
-            throw new LocalizedException($this->getLimitMessage());
+
+            $this->notificationSender->send(
+                $storeId,
+                (string)__('Daily order count limit exceeded'),
+                $email,
+                $remoteIp,
+                (string)$currentCount,
+                (string)$countLimit,
+                !$notifyOnly
+            );
+
+            if (!$notifyOnly) {
+                throw new LocalizedException($this->getLimitMessage());
+            }
         }
 
         if ($amountLimit > 0.0 && ((float)$dailyTotals['base_amount_total'] + $currentOrderAmount) > $amountLimit) {
+            $currentAmount = (float)$dailyTotals['base_amount_total'] + $currentOrderAmount;
+            $actionType = $notifyOnly ? 'order_limit_notify' : 'order_blocked';
             $this->actionLogger->log(
-                'order_blocked',
+                $actionType,
                 'email',
                 $email,
                 null,
-                sprintf(
-                    'Daily amount limit exceeded (%.2f/%.2f)',
-                    (float)$dailyTotals['base_amount_total'] + $currentOrderAmount,
-                    $amountLimit
-                )
+                sprintf('Daily amount limit exceeded (%.2f/%.2f)', $currentAmount, $amountLimit)
             );
-            throw new LocalizedException($this->getLimitMessage());
+
+            $this->notificationSender->send(
+                $storeId,
+                (string)__('Daily amount limit exceeded'),
+                $email,
+                $remoteIp,
+                sprintf('%.2f', $currentAmount),
+                sprintf('%.2f', $amountLimit),
+                !$notifyOnly
+            );
+
+            if (!$notifyOnly) {
+                throw new LocalizedException($this->getLimitMessage());
+            }
         }
     }
 

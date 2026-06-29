@@ -28,6 +28,7 @@ class ActionTypeOptions implements OptionSourceInterface
             ['value' => 'ip_blacklist_remove', 'label' => __('IP Unblacklisted')],
             ['value' => 'email_sync', 'label' => __('Email Synced')],
             ['value' => 'order_blocked', 'label' => __('Order Blocked')],
+            ['value' => 'order_limit_notify', 'label' => __('Limit Violation Notified')],
             ['value' => 'migration', 'label' => __('Data Migration')],
         ];
     }
